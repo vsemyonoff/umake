@@ -1,0 +1,8 @@
+Add:
+- custom file extensions support
+- C support
+- PCH support
+- symlink support -- DONE
+
+Update:
+- use VPATH instead of direct path specification
