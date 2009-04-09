@@ -3,16 +3,11 @@
 # Makefile
 #
 # Author: Vladyslav Semyonov
-# E-mail: vsemyonoff@gmail.com
+# E-mail: vsemyonoff [at] gmail.com
 #
 ################################################################################
 
-.SUFFIXES :
-
 ifeq ($(strip $(CONFIG)),)
-################################################################################
-# Analyze all configuration files and $(MAKECMDGOALS)
-################################################################################
 
 # Toplevel build folder
 BUILDROOT      = $(shell pwd)
@@ -36,10 +31,10 @@ $(TARGETS) : % : %.prj
 	@$(MAKE) --makefile $(BUILDROOT)/Makefile --no-print-directory \
 		-C `readlink -m $< | xargs dirname` CONFIG=$< $(ACTIONS)
 
+#%.prj :
+#	@$(MAKE) CONFIG=$@ config
+
 else
-################################################################################
-# Build configuration
-################################################################################
 
 # Project name
 PROJECT        = $(basename $(CONFIG))
@@ -61,6 +56,10 @@ all :
 # Override default from project file
 sinclude $(CONFIG)
 
+#vpath %.cpp $(SOURCEDIR)
+#vpath %.d $(DEPENDDIR)
+#vpath %.o $(OBJECTDIR)
+
 TARGET         = $(BINARYDIR)/$(BINARY)
 FLAGSCPP       = $(CPPFLAGS) $(addprefix -D,$(DEFINITIONS)) $(addprefix -I,$(INCLUDEPATH))
 FLAGSLD        = $(LDFLAGS) $(addprefix -L,$(LIBRARYPATH)) $(addprefix -l,$(LIBRARYES))
@@ -71,18 +70,14 @@ SOURCES        = $(notdir $(wildcard $(SOURCEDIR)/*.cpp))
 endif
 # Show warning about empty sources list
 ifeq ($(strip $(SOURCES)),)
-all : warning
-warning :
+all : error
+error :
 	@echo "No sources found in the '$(SOURCEDIR)' directory."
 	@echo "Set correct values for 'SOURCEDIR' and/or 'SOURCES' in '$(CONFIG)'."
 endif
 
 OBJECTS        = $(addprefix $(OBJECTDIR)/,$(SOURCES:%.cpp=%.o))
 DEPENDS        = $(addprefix $(DEPENDDIR)/,$(SOURCES:%.cpp=%.d))
-
-#vpath %.cpp $(SOURCEDIR)
-#vpath %.d $(DEPENDDIR)
-#vpath %.o $(OBJECTDIR)
 
 ################################################################################
 
