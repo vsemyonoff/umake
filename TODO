@@ -1,8 +1,10 @@
 Add:
-- custom file extensions support
+- custom file extensions support -- REJECTED
+- asm support
 - C support
 - PCH support
-- symlink support -- DONE
+- symlinks support -- DONE
+- pkgconfig support -- DONE
 
 Update:
-- use VPATH instead of direct path specification
+- use VPATH instead of direct path specification -- REJECTED

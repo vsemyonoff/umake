@@ -7,152 +7,235 @@
 #
 ################################################################################
 
-ifeq ($(strip $(CONFIG)),)
+.SUFFIXES:
 
-# Toplevel build folder
-BUILDROOT      = $(shell pwd)
+# Defalut phony target allow to add user defined targets in config file
+.PHONY: all
+all :
 
-CONFIGS        = $(wildcard *.prj)
-ifeq ($(strip $(CONFIGS)),)
-CONFIGS        = debug.prj
-endif
+# Empty string constant
+override EMPTY =
 
-TARGETS        = $(filter $(CONFIGS:%.prj=%), $(MAKECMDGOALS))
-ifeq ($(strip $(TARGETS)),)
-TARGETS        = $(CONFIGS:%.prj=%)
-endif
+ifeq ($(strip $(CONFIGFILE)), $(EMPTY))
 
-ACTIONS        = $(filter-out $(TARGETS), $(MAKECMDGOALS))
+    # Makefile's name and path
+    override MAKEFILE = $(firstword $(MAKEFILE_LIST))
+    # Configuration files search path
+    override CONFIGSPATH = $(dir $(MAKEFILE))
 
-.PHONY : all $(TARGETS) $(ACTIONS)
-all $(ACTIONS) : $(TARGETS)
+    # Extend MAKE variable with proper makefile name
+    override MAKE += --makefile $(MAKEFILE) --no-print-directory
 
-$(TARGETS) : % : %.prj
-	@$(MAKE) --makefile $(BUILDROOT)/Makefile --no-print-directory \
-		-C `readlink -m $< | xargs dirname` CONFIG=$< $(ACTIONS)
+    # Search all config files in makefile's folder
+    override CONFIGSLIST = $(wildcard $(CONFIGSPATH)*.prj)
+    ifeq ($(strip $(CONFIGSLIST)), $(EMPTY))
+        override CONFIGSLIST = $(shell cd $(CONFIGSPATH) && pwd).prj
+    endif
 
-#%.prj :
-#	@$(MAKE) CONFIG=$@ config
+    # Divide input arguments to projects and actions
+    override PROJECTS = $(filter $(notdir $(CONFIGSLIST:%.prj=%)), $(MAKECMDGOALS))
+    ifeq ($(strip $(PROJECTS)), $(EMPTY))
+        override PROJECTS = $(notdir $(CONFIGSLIST:%.prj=%))
+    endif
+    override ACTIONS = $(filter-out $(PROJECTS), $(MAKECMDGOALS))
+
+    all: $(PROJECTS)
+
+    .PHONY: $(ACTIONS)
+    $(ACTIONS): $(PROJECTS)
+		@echo "Reached target: $@"
+
+    .PHONY: $(PROJECTS)
+    $(PROJECTS): %: $(CONFIGSPATH)%.prj
+		@$(MAKE) $(ACTIONS) CONFIGFILE=$<
+
+    %.prj:
+		@$(MAKE) config CONFIGFILE=$@
+
+    sinclude depends.prg
 
 else
 
-# Project name
-PROJECT        = $(basename $(CONFIG))
+    # Add trailing slash function
+    trgslash = $(filter %/, $(1)) $(addsuffix /, $(filter-out %/, $(1)))
+    # Configuration file's absolute path (resolve symlink if needed)
+    override CONFIGPATH = $(dir $(shell readlink -f $(CONFIGFILE)))
+    # Project's short name
+    override PROJECT = $(basename $(notdir $(CONFIGFILE)))
 
-# Default project settings
-BINARY         = $(shell basename `pwd`)
-BINARYDIR      = .
-SOURCEDIR      = .
-INCLUDEPATH    = .
-DEPENDDIR      = .dep
-OBJECTDIR      = .obj
+    #
+    # Some default values
+    #
+    DEPENDDIR = .dep
+    OBJECTDIR = .obj
+    FLAGSCXX  = -ggdb -pipe -pedantic -Wall
 
-# Default compiler flags
-CXXFLAGS       := -ggdb -pipe -pedantic -Wall $(CXXFLAGS)
+    sinclude $(CONFIGFILE)
 
-# Defalut target
-all :
+    #
+    # Process configuration file settings
+    #
+    ifeq ($(strip $(TARGET)), $(EMPTY))
+        override TARGET =  $(notdir $(shell cd $(CONFIGPATH) && pwd))
+    else
+        override TARGET := $(patsubst /%, %, $(patsubst ./%, %, $(TARGET)))
+    endif
+    override SOURCEDIRS := $(patsubst /%, %, $(patsubst ./%, %, $(call trgslash, $(SOURCEDIRS))))
+    override SOURCES := $(patsubst /%, %, $(patsubst ./%, %, $(SOURCES)))
+    override INCLUDEPATH := $(patsubst /%, %, $(patsubst ./%, %, $(call trgslash, $(INCLUDEPATH))))
+    override BUILDROOT := $(call trgslash, $(BUILDROOT))
+    override OUTDPUTIR := $(patsubst /%, %, $(patsubst ./%, %, $(call trgslash, $(OUTPUTDIR))))
+    override DEPENDDIR := $(patsubst /%, %, $(patsubst ./%, %, $(call trgslash, $(DEPENDDIR))))
+    override OBJECTDIR := $(patsubst /%, %, $(patsubst ./%, %, $(call trgslash, $(OBJECTDIR))))
+    override LIBRARYPATH := $(patsubst /%, %, $(patsubst ./%, %, $(call trgslash, $(LIBRARYPATH))))
 
-# Override default from project file
-sinclude $(CONFIG)
+    #
+    # Generate sources list and process internal variables
+    #
+    ifeq ($(filter config, $(MAKECMDGOALS)), $(EMPTY))
+        override SRCLIST = $(foreach srcdir, $(addprefix $(CONFIGPATH), $(SOURCEDIRS)), $(wildcard $(srcdir)*.cpp))
+        override SRCLIST += $(addprefix $(CONFIGPATH), $(SOURCES))
+        ifeq ($(strip $(SRCLIST)), $(EMPTY))
+            override SRCLIST = $(wildcard $(CONFIGPATH)*.cpp)
+            ifeq ($(strip $(SRCLIST)), $(EMPTY))
+                MESS = "No sources found in '$(CONFIGPATH)'. Update configuration file '$(CONFIGFILE)'."
+                $(error $(MESS))
+            endif
+        endif
+    endif
 
-#vpath %.cpp $(SOURCEDIR)
-#vpath %.d $(DEPENDDIR)
-#vpath %.o $(OBJECTDIR)
+    # Get 'pkg-config' information
+    override PKGDEFINITIONS = $(foreach package, $(REQUIREPKGS), $(shell pkg-config --cflags-only-other $(package)))
+    override PKGINCLUDEPATH = $(foreach package, $(REQUIREPKGS), $(shell pkg-config --cflags-only-I $(package)))
+    override PKGLIBRARYPATH = $(foreach package, $(REQUIREPKGS), $(shell pkg-config --libs-only-L $(package)))
+    override PKGLIBRARIES = $(foreach package, $(REQUIREPKGS), $(shell pkg-config --libs-only-l $(package)))
 
-TARGET         = $(BINARYDIR)/$(BINARY)
-FLAGSCPP       = $(CPPFLAGS) $(addprefix -D,$(DEFINITIONS)) $(addprefix -I,$(INCLUDEPATH))
-FLAGSLD        = $(LDFLAGS) $(addprefix -L,$(LIBRARYPATH)) $(addprefix -l,$(LIBRARYES))
+    # Extend system wide with configuration file's settings
+    override CXXFLAGS += $(FLAGSCXX)
+    override CPPFLAGS += $(FLAGSCPP) \
+                         $(addprefix -D, $(DEFINITIONS)) \
+                         $(PKGDEFINITIONS) \
+                         $(addprefix -I$(CONFIGPATH), $(INCLUDEPATH)) \
+                         $(PKGINCLUDEPATH)
 
-# Create sources list if not defined in project file
-ifeq ($(strip $(SOURCES)),)
-SOURCES        = $(notdir $(wildcard $(SOURCEDIR)/*.cpp))
-endif
-# Show warning about empty sources list
-ifeq ($(strip $(SOURCES)),)
-all : error
-error :
-	@echo "No sources found in the '$(SOURCEDIR)' directory."
-	@echo "Set correct values for 'SOURCEDIR' and/or 'SOURCES' in '$(CONFIG)'."
-endif
+    override LDFLAGS  += $(FLAGSLD) \
+                         $(addprefix -L$(CONFIGPATH), $(LIBRARYPATH)) \
+                         $(PKGLIBRARYPATH) \
+                         $(addprefix -l, $(LIBRARIES)) \
+                         $(PKGLIBRARIES)
 
-OBJECTS        = $(addprefix $(OBJECTDIR)/,$(SOURCES:%.cpp=%.o))
-DEPENDS        = $(addprefix $(DEPENDDIR)/,$(SOURCES:%.cpp=%.d))
+    # Internal variables
+    override OUTDIR = $(BUILDROOT)$(OUTPUTDIR)
+    override DEPDIR = $(BUILDROOT)$(DEPENDDIR)
+    override OBJDIR = $(BUILDROOT)$(OBJECTDIR)
 
-################################################################################
+    # Filenames conversions functions
+    src2dep = $(addprefix $(DEPDIR), $(patsubst %.cpp, %.d, $(subst /,_, $(1))))
+    dep2src = $(patsubst %.d, %.cpp, $(subst _,/, $(notdir $(1))))
+    src2obj = $(addprefix $(OBJDIR), $(patsubst %.cpp, %.o, $(subst /,_, $(1))))
+    obj2src = $(patsubst %.o, %.cpp, $(subst _,/, $(notdir $(1))))
+    dep2obj = $(patsubst %.d, %.o, $(subst $(DEPDIR),$(OBJDIR), $(1)))
+    obj2dep = $(patsubst %.o, %.d, $(subst $(OBJDIR),$(DEPDIR), $(1)))
 
-.PHONY : $(PROJECT) all config exec clean distclean
+    # Intermediate files
+    DEPENDS = $(foreach src, $(SRCLIST), $(call src2dep, $(src)))
+    OBJECTS = $(foreach src, $(SRCLIST), $(call src2obj, $(src)))
 
-all : $(TARGET)
+    # Fulle target name
+    override OUTPUT = $(OUTDIR)$(TARGET)
 
-$(TARGET) $(PROJECT) : $(OBJECTS)
-	@mkdir -p $(BINARYDIR)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(FLAGSLD)
+    ################################################################################
 
-$(OBJECTDIR)/%.o : $(SOURCEDIR)/%.cpp $(CONFIG)
-	@mkdir -p $(OBJECTDIR)
-	$(CXX) $(CXXFLAGS) $(FLAGSCPP) -o $@ -c $<
+    #
+    # Build rules
+    #
+    $(OUTPUT): $(OBJECTS)
+		@[ -d $(OUTDIR) ] || mkdir -p $(OUTDIR)
+		$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
-$(DEPENDDIR)/%.d : $(SOURCEDIR)/%.cpp
-	@mkdir -p $(DEPENDDIR)
-	@echo "Generating dependency: $< -> $@"
-	@set -e; $(CPP) -MM $(FLAGSCPP) $< | \
-	  sed 's/\($*\)\.o[ :]*/$(subst /,\/,$(OBJECTDIR))\/\1.o $(subst /,\/,$(DEPENDDIR))\/$(@F) : /g' \
-	  > $@;
+    %.d:
+		@[ -d $(DEPDIR) ] || mkdir -p $(DEPDIR)
+		@echo "Updating dependency file: $(call dep2src, $@) -> $@"
+		@echo $(patsubst %.o:, $(call dep2obj, $@) $@: $(CONFIGFILE), $(shell $(CXX) -MM $(call dep2src, $@))) > $@
 
-sinclude $(DEPENDS)
+    %.o:
+		@[ -d $(OBJDIR) ] || mkdir -p $(OBJDIR)
+		$(CXX) $(CXXFLAGS) $(CPPFLAGS) -o $@ -c $(call obj2src, $@)
 
-exec : $(TARGET)
-	@exec $(TERMINAL) $(TARGET)
+    ifeq ($(filter config clean distclean, $(MAKECMDGOALS)), $(EMPTY))
+        sinclude $(DEPENDS)
+    endif
 
-distclean : clean
-	@$(RM) -v $(TARGET)
-	@if [ ! $(BINARYDIR) == "." ]; then $(RM) -rv $(BINARYDIR); fi
+    all: $(OUTPUT)
 
-clean :
-	@$(RM) -v .cpptags
-	@find . -name *~ -exec rm -v {} +
-	@$(RM) -v $(OBJECTS)
-	@if [ ! $(OBJECTDIR) == "." ]; then $(RM) -rv $(OBJECTDIR); fi
-	@$(RM) -v $(DEPENDS)
-	@if [ ! $(DEPENDDIR) == "." ]; then $(RM) -rv $(DEPENDDIR); fi
+    #
+    # Build actions
+    #
+    .PHONY: config
+    config:
+		@echo "Updating configuration file: $(CONFIGFILE)"
+		@echo "#" > $(CONFIGFILE)
+		@echo "# Files settings" >> $(CONFIGFILE)
+		@echo "#" >> $(CONFIGFILE)
+		@echo "" >> $(CONFIGFILE)
+		@echo "# ALL PATH SETTINGS ARE TREATED RELATIVE TO THIS CONFIGURATION FILE!!!"  >> $(CONFIGFILE)
+		@echo "" >> $(CONFIGFILE)
+		@echo "# Project's target name" >> $(CONFIGFILE)
+		@echo "TARGET       = $(TARGET)" >> $(CONFIGFILE)
+		@echo "# Source folders list" >> $(CONFIGFILE)
+		@echo "SOURCEDIRS   = $(SOURCEDIRS)" >> $(CONFIGFILE)
+		@echo "# Space delimited list of source files" >> $(CONFIGFILE)
+		@echo "SOURCES      = $(SOURCES)" >> $(CONFIGFILE)
+		@echo "# Include files path" >> $(CONFIGFILE)
+		@echo "INCLUDEPATH  = $(INCLUDEPATH)" >> $(CONFIGFILE)
+		@echo "# Toplevel output folder (default: current directory)" >> $(CONFIGFILE)
+		@echo "BUILDROOT    = $(BUILDROOT)" >> $(CONFIGFILE)
+		@echo "# Where to put target? (default: current directory)" >> $(CONFIGFILE)
+		@echo "OUTPUTDIR    = $(OUTPUTDIR)" >> $(CONFIGFILE)
+		@echo "# Where to put dependency files? (default: current directory)" >> $(CONFIGFILE)
+		@echo "DEPENDDIR    = $(DEPENDDIR)" >> $(CONFIGFILE)
+		@echo "# Where to put object files? (default: current directory)" >> $(CONFIGFILE)
+		@echo "OBJECTDIR    = $(OBJECTDIR)" >> $(CONFIGFILE)
+		@echo "" >> $(CONFIGFILE)
+		@echo "#" >> $(CONFIGFILE)
+		@echo "# Terminal settings" >> $(CONFIGFILE)
+		@echo "#" >> $(CONFIGFILE)
+		@echo "" >> $(CONFIGFILE)
+		@echo "TERMNAME     = $(TERMNAME)" >> $(CONFIGFILE)
+		@echo "TERMOPTIONS  = $(TERMOPTIONS)" >> $(CONFIGFILE)
+		@echo "" >> $(CONFIGFILE)
+		@echo "#" >> $(CONFIGFILE)
+		@echo "# Preprocessor, compiler, linker settings" >> $(CONFIGFILE)
+		@echo "#" >> $(CONFIGFILE)
+		@echo "" >> $(CONFIGFILE)
+		@echo "# Preprocessor flags" >> $(CONFIGFILE)
+		@echo "FLAGSCPP     = $(FLAGSCPP)" >> $(CONFIGFILE)
+		@echo "# Preprocessor macros definitions" >> $(CONFIGFILE)
+		@echo "DEFINITIONS  = $(DEFINITIONS)" >> $(CONFIGFILE)
+		@echo "# Compiler flags" >> $(CONFIGFILE)
+		@echo "FLAGSCXX     = $(FLAGSCXX)" >> $(CONFIGFILE)
+		@echo "# Linker flags" >> $(CONFIGFILE)
+		@echo "FLAGSLD      = $(FLAGSLD)">> $(CONFIGFILE)
+		@echo "# Dynamic libraries path" >> $(CONFIGFILE)
+		@echo "LIBRARYPATH  = $(LIBRARYPATH)">> $(CONFIGFILE)
+		@echo "# Dynamic libraries" >> $(CONFIGFILE)
+		@echo "LIBRARIES    = $(LIBRARIES)" >> $(CONFIGFILE)
+		@echo "# Required 'pkg-config' packages list" >> $(CONFIGFILE)
+		@echo "REQUIREPKGS  = $(REQUIREPKGS)" >> $(CONFIGFILE)
 
-$(CONFIG) config :
-	@echo "Generating project file: $(CONFIG)"
-	@echo "#" > $(CONFIG)
-	@echo "#" Project settings >> $(CONFIG)
-	@echo "#" >> $(CONFIG)
-	@echo "" >> $(CONFIG)
-	@echo "# Target binary name (default: project's directory name)" >> $(CONFIG)
-	@echo "BINARY       = $(BINARY)" >> $(CONFIG)
-	@echo "# Projects directoryes (default: current directory)" >> $(CONFIG)
-	@echo "BINARYDIR    = $(BINARYDIR)" >> $(CONFIG)
-	@echo "SOURCEDIR    = $(SOURCEDIR)" >> $(CONFIG)
-	@echo "OBJECTDIR    = $(OBJECTDIR)" >> $(CONFIG)
-	@echo "DEPENDDIR    = $(DEPENDDIR)" >> $(CONFIG)
-	@echo "# Space delimited list of source files (default: *.cpp files in SOURCEDIR)" >> $(CONFIG)
-	@echo "#SOURCES      = " >> $(CONFIG)
-	@echo "# Terminal settings (default: run without terminal)" >> $(CONFIG)
-	@echo "TERMNAME     = $(TERMNAME)" >> $(CONFIG)
-	@echo "TERMOPTIONS  = $(TERMOPTIONS)" >> $(CONFIG)
-	@echo "" >> $(CONFIG)
-	@echo "#" >> $(CONFIG)
-	@echo "# Preprocessor, compiler, linker settings" >> $(CONFIG)
-	@echo "#" >> $(CONFIG)
-	@echo "" >> $(CONFIG)
-	@echo "# Compiler flags" >> $(CONFIG)
-	@echo "CXXFLAGS     = $(CXXFLAGS)" >> $(CONFIG)
-	@echo "# Preprocessor flags" >> $(CONFIG)
-	@echo "CPPFLAGS     = $(CPPFLAGS)" >> $(CONFIG)
-	@echo "# Macros definitions (space delimited)" >> $(CONFIG)
-	@echo "DEFINITIONS  = $(DEFINITIONS)" >> $(CONFIG)
-	@echo "# Include files path (space delimited)" >> $(CONFIG)
-	@echo "INCLUDEPATH  = $(INCLUDEPATH)" >> $(CONFIG)
-	@echo "# Linker flags" >> $(CONFIG)
-	@echo "LDFLAGS      = $(LDFLAGS)">> $(CONFIG)
-	@echo "# Dynamic libraryes path (space delimited)" >> $(CONFIG)
-	@echo "LIBRARYPATH  = $(LIBRARYPATH)">> $(CONFIG)
-	@echo "# Dynamic libraryes (space delimited)" >> $(CONFIG)
-	@echo "LIBRARYES    = $(LIBRARYES)" >> $(CONFIG)
+    .PHONY: exec
+    exec: $(OUTPUT)
+		@exec $(TERMINAL) $(OUTPUT)
+
+    .PHONY: distclean
+    distclean: clean
+		@$(RM) -v $(OUTPUT)
+
+    .PHONY: clean
+    clean:
+		@$(RM) -v .cpptags
+		@find . -name *~ -exec rm -v {} +
+		@$(RM) -v $(OBJECTS)
+		@$(RM) -v $(DEPENDS)
 
 endif
