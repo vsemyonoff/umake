@@ -1,0 +1,48 @@
+#
+# Files settings
+#
+
+# ALL PATH SETTINGS ARE TREATED RELATIVE TO THIS CONFIGURATION FILE!!!
+
+# Project's target name
+TARGET       = test
+# Source folders list
+SOURCEDIRS   = src
+# Space delimited list of source files
+SOURCES      = 
+# Include files path
+INCLUDEPATH  = 
+# Toplevel output folder (default: current directory)
+BUILDROOT    =  
+# Where to put target? (default: current directory)
+OUTPUTDIR    = 
+# Where to put dependency files? (default: current directory)
+DEPENDDIR    = .dep/
+# Where to put object files? (default: current directory)
+OBJECTDIR    = .obj/
+
+#
+# Terminal settings
+#
+
+TERMNAME     = 
+TERMOPTIONS  = 
+
+#
+# Preprocessor, compiler, linker settings
+#
+
+# Preprocessor flags
+FLAGSCPP     = 
+# Preprocessor macros definitions
+DEFINITIONS  = 
+# Compiler flags
+FLAGSCXX     = -ggdb -pipe -pedantic -Wall
+# Linker flags
+FLAGSLD      = 
+# Dynamic libraries path
+LIBRARYPATH  = 
+# Dynamic libraries
+LIBRARIES    = 
+# Required 'pkg-config' packages list
+REQUIREPKGS  = 
