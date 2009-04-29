@@ -182,7 +182,9 @@ else
 #
 
         override EXTLIST = $(CEXT) $(CXXEXT) $(ASEXT)
-        override SRCLIST = $(foreach ext, $(EXTLIST), $(foreach srcdir, $(addprefix $(CONFIGPATH), $(SOURCEDIRS)), $(wildcard $(srcdir)*$(ext))))
+        override SRCLIST = $(foreach ext, $(EXTLIST), \
+                               $(foreach srcdir, $(addprefix $(CONFIGPATH), $(SOURCEDIRS)), \
+                                   $(wildcard $(srcdir)*$(ext))))
         override SRCLIST += $(filter $(addprefix %, $(EXTLIST)), $(addprefix $(CONFIGPATH), $(SOURCES)))
         ifeq ($(strip $(SRCLIST)), $(EMPTY))
             override SRCLIST = $(foreach ext, $(EXTLIST), $(wildcard $(CONFIGPATH)*.$(ext)))

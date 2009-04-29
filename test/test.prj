@@ -4,22 +4,32 @@
 
 # ALL PATH SETTINGS ARE TREATED RELATIVE TO THIS CONFIGURATION FILE!!!
 
-# Project's target name
-TARGET       = test
+# C sources extension (default: .c)
+CEXT         = .c
+# C++ sources extension (default: .cpp)
+CXXEXT       = .cpp
+# Assembler sources extension (default: .asm)
+ASEXT        = .asm
 # Source folders list
-SOURCEDIRS   = src
+SOURCEDIRS   = src/
 # Space delimited list of source files
 SOURCES      = 
-# Include files path
-INCLUDEPATH  = 
-# Toplevel output folder (default: current directory)
-BUILDROOT    =  
-# Where to put target? (default: current directory)
+# C/C++ preprocessor include files path
+CPPINCPATH   = 
+# Assembler preprocessor include files path
+ASINCPATH    = 
+# Toplevel output folder (default: current folder
+BUILDROOT    = 
+# Target name (default: parent folder's name)
+TARGET       = test
+# Where to put target? (default: BUILDROOT)
 OUTPUTDIR    = 
-# Where to put dependency files? (default: current directory)
+# Where to put dependency files? (default: BUILDROOT/.dep/)
 DEPENDDIR    = .dep/
-# Where to put object files? (default: current directory)
+# Where to put object files? (default: BUILDROOT/.obj/)
 OBJECTDIR    = .obj/
+# Dynamic libraries path
+LIBRARYPATH  = 
 
 #
 # Terminal settings
@@ -29,20 +39,36 @@ TERMNAME     =
 TERMOPTIONS  = 
 
 #
-# Preprocessor, compiler, linker settings
+# Preprocessors settings
 #
 
-# Preprocessor flags
+# C/C++ preprocessor flags
 FLAGSCPP     = 
-# Preprocessor macros definitions
-DEFINITIONS  = 
-# Compiler flags
-FLAGSCXX     = -ggdb -pipe -pedantic -Wall
+# C/C++ preprocessor macros definitions
+CPPMACROS    = 
+# Assembler preprocessor flags
+FLAGSAPP     = 
+# Assembler preprocessor macros definitions
+ASMACROS     = 
+
+#
+# Compilers settings
+#
+
+# C compiler flags
+FLAGSC       = 
+# C++ compiler flags
+FLAGSCXX     = 
+# Assembler compiler flags
+FLAGSAS      = 
+
+#
+# Linker settings
+#
+
 # Linker flags
 FLAGSLD      = 
-# Dynamic libraries path
-LIBRARYPATH  = 
 # Dynamic libraries
 LIBRARIES    = 
-# Required 'pkg-config' packages list
+# Required 'pkg-config' packages list (format: pkgname[:==|<=|>=version])
 REQUIREPKGS  = 
