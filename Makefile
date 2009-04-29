@@ -289,29 +289,29 @@ else
 			@echo "Updating dependency file: $(call dep2src, $@) -> $@"
 			@echo $(patsubst %:, \
 						$(call dep2obj, $@) $@: $(CONFIGFILE), \
-							$(shell $(CC) -MM $(CPPFLASG) $(call dep2src, $@))) > $@
+							$(shell $(CC) -M $(CPPFLASG) $(call dep2src, $@))) > $@
 
         %$(CXXEXT).d:
 			@[ -d $(DEPDIR) ] || mkdir -p $(DEPDIR)
 			@echo "Updating dependency file: $(call dep2src, $@) -> $@"
 			@echo $(patsubst %:, \
 						$(call dep2obj, $@) $@: $(CONFIGFILE), \
-							$(shell $(CXX) -MM $(CPPFLAGS) $(call dep2src, $@))) > $@
+							$(shell $(CXX) -M $(CPPFLAGS) $(call dep2src, $@))) > $@
 
         %$(ASEXT).d:
 			@[ -d $(DEPDIR) ] || mkdir -p $(DEPDIR)
 			@echo "Updating dependency file: $(call dep2src, $@) -> $@"
 			@echo $(patsubst %:, \
 						$(call dep2obj, $@) $@: $(CONFIGFILE), \
-							$(shell $(AS) -MM $(APPFLAGS) $(call dep2src, $@))) > $@
+							$(shell $(AS) -M $(APPFLAGS) $(call dep2src, $@))) > $@
 
         %$(CEXT).o:
 			@[ -d $(OBJDIR) ] || mkdir -p $(OBJDIR)
-			$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ -c $(call obj2src, $@)
+			$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(call obj2src, $@)
 
         %$(CXXEXT).o:
 			@[ -d $(OBJDIR) ] || mkdir -p $(OBJDIR)
-			$(CXX) $(CXXFLAGS) $(CPPFLAGS) -o $@ -c $(call obj2src, $@)
+			$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $(call obj2src, $@)
 
         %$(ASEXT).o:
 			@[ -d $(OBJDIR) ] || mkdir -p $(OBJDIR)
