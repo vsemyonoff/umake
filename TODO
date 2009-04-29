@@ -1,10 +1,14 @@
 Add:
-- custom file extensions support -- REJECTED
-- asm support
-- C support
-- PCH support
+- C support (gcc)
+- C++ support (g++)
+- Assembler support (yasm)
+- C/C++ precompiled headers support (gcc)
 - symlinks support -- DONE
 - pkgconfig support -- DONE
+- custom file extensions support
+- profiler support (gprof)
+- documentation generation support (doxygen)
 
 Update:
 - use VPATH instead of direct path specification -- REJECTED
+- add SOURCES filtering for known extensions -- DONE
