@@ -1,8 +1,9 @@
+# Silent/verbose 'make' output (default: silent, non empty value - verbose)
+VERBOSE      = 
+
 #
 # Files settings
 #
-
-# ALL PATH SETTINGS ARE TREATED RELATIVE TO THIS CONFIGURATION FILE!!!
 
 # C sources extension (default: .c)
 CEXT         = .c
@@ -10,26 +11,22 @@ CEXT         = .c
 CXXEXT       = .cpp
 # Assembler sources extension (default: .asm)
 ASEXT        = .asm
+
+# C precompiled headers list
+CGCH         = 
+# C++ precompiled headers list
+CXXGCH       = include/main.h
 # Source folders list
-SOURCEDIRS   = src/
+SOURCEDIRS   = src/ src/asm
 # Space delimited list of source files
 SOURCES      = 
-# C/C++ preprocessor include files path
-CPPINCPATH   = 
-# Assembler preprocessor include files path
-ASINCPATH    = 
-# Toplevel output folder (default: current folder
-BUILDROOT    = 
-# Target name (default: parent folder's name)
-TARGET       = test
+
+# Toplevel output folder (default: current folder)
+BUILDROOT    = build/
 # Where to put target? (default: BUILDROOT)
 OUTPUTDIR    = 
-# Where to put dependency files? (default: BUILDROOT/.dep/)
-DEPENDDIR    = .dep/
-# Where to put object files? (default: BUILDROOT/.obj/)
-OBJECTDIR    = .obj/
-# Dynamic libraries path
-LIBRARYPATH  = 
+# Target name (default: parent folder's name)
+TARGET       = maketest
 
 #
 # Terminal settings
@@ -45,22 +42,27 @@ TERMOPTIONS  =
 # C/C++ preprocessor flags
 FLAGSCPP     = 
 # C/C++ preprocessor macros definitions
-CPPMACROS    = 
+CPPMACROS    = DEBUG
+# C/C++ preprocessor include files path
+CPPINCPATH   = include/
+
 # Assembler preprocessor flags
 FLAGSAPP     = 
 # Assembler preprocessor macros definitions
-ASMACROS     = 
+ASMACROS     = NOT_DIR
+# Assembler preprocessor include files path
+ASINCPATH    = include/asm/
 
 #
 # Compilers settings
 #
 
 # C compiler flags
-FLAGSC       = 
+FLAGSC       = -ggdb -pipe -pedantic -Wall
 # C++ compiler flags
-FLAGSCXX     = 
+FLAGSCXX     = -ggdb -pipe -pedantic -Wall
 # Assembler compiler flags
-FLAGSAS      = 
+FLAGSAS      = -f elf64
 
 #
 # Linker settings
@@ -68,7 +70,9 @@ FLAGSAS      =
 
 # Linker flags
 FLAGSLD      = 
+# Dynamic libraries path
+LIBRARYPATH  = 
 # Dynamic libraries
 LIBRARIES    = 
 # Required 'pkg-config' packages list (format: pkgname[:==|<=|>=version])
-REQUIREPKGS  = 
+REQUIREPKGS  = libxine xorg-server
