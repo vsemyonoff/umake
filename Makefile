@@ -409,10 +409,7 @@ else
     .PHONY: config
     config:
 		@echo "Updating configuration file: $(CONFIGFILE)"
-		@echo "# Silent/verbose 'make' output (default: silent, non empty value - verbose)" > $(CONFIGFILE)
-		@echo "VERBOSE      = $(VERBOSE)" >> $(CONFIGFILE)
-		@echo "" >> $(CONFIGFILE)
-		@echo "#" >> $(CONFIGFILE)
+		@echo "#" > $(CONFIGFILE)
 		@echo "# Files settings" >> $(CONFIGFILE)
 		@echo "#" >> $(CONFIGFILE)
 		@echo "" >> $(CONFIGFILE)
