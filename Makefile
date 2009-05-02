@@ -393,16 +393,41 @@ else
 
         .PHONY: distclean
         distclean: clean
-			@$(RM) -v $(GCHC)
-			@$(RM) -v $(GCHCXX)
-			@$(RM) -v $(OUTPUT)
+			@_cleandir() { \
+			if [ -d "$$1" ]; then \
+				if [ "`find "$$1" -type f`" ==  "" ]; then \
+					$(RM) -rv "$$1"; \
+					PARENT=`dirname "$$1"`; \
+					if [ ! "$$PARENT" == "." ] || [ ! "$$PARENT" == "/" ]; then \
+						_cleandir "$$PARENT"; \
+					fi \
+				fi \
+			fi \
+			}; \
+			$(RM) -v $(GCHC); \
+			_cleandir $(CGCHDIR); \
+			$(RM) -v $(GCHCXX); \
+			_cleandir $(CXXGCHDIR); \
+			$(RM) -v $(OUTPUT); \
+			_cleandir $(OUTDIR);
 
         .PHONY: clean
         clean:
-			@$(RM) -v .cpptags
-			@find . -name *~ -exec rm -v {} +
-			@$(RM) -v $(OBJECTS)
-			@$(RM) -v $(DEPENDS)
+			@_cleandir() { \
+			if [ -d "$$1" ]; then \
+				if [ "`find "$$1" -type f`" ==  "" ]; then \
+					$(RM) -rv "$$1"; \
+					PARENT=`dirname "$$1"`; \
+					if [ ! "$$PARENT" == "." ] || [ ! "$$PARENT" == "/" ]; then \
+						_cleandir "$$PARENT"; \
+					fi \
+				fi \
+			fi \
+			}; \
+			$(RM) -v $(OBJECTS); \
+			_cleandir $(OBJDIR); \
+			$(RM) -v $(DEPENDS); \
+			_cleandir $(DEPDIR);
 
     endif # ifeq ($(filter config, $(MAKECMDGOALS)), $(EMPTY))
 
