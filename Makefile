@@ -291,13 +291,13 @@ else
         # Use YASM for asm compilation and preprocessing
         override AS         = yasm
 
-        # Select linker
+        # Select linker and linker flags
         override LINKER     = $(LD)
         ifneq ($(filter %$(CEXT), $(SRCLIST)), $(EMPTY))
-            override LINKER = $(CC)
+            override LINKER = $(strip $(CC) $(CFLAGS))
         endif
         ifneq ($(filter %$(CXXEXT), $(SRCLIST)), $(EMPTY))
-            override LINKER = $(CXX)
+            override LINKER = $(strip $(CXX) $(CXXFLAGS))
         endif
 
 ################################################################################
@@ -378,7 +378,7 @@ else
 
         $(OUTPUT): $(OBJECTS)
 			@[ -d $(OUTDIR) ] || mkdir -p $(OUTDIR)
-			$(LINKER) -o $@ $^ $(LDFLAGS)
+			$(LINKER) $(LDFLAGS) -o $@ $^
 
 #
 # Build actions (phony targets)
