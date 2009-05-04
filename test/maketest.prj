@@ -1,6 +1,3 @@
-# Silent/verbose 'make' output (default: silent, non empty value - verbose)
-VERBOSE      = 
-
 #
 # Files settings
 #
@@ -12,21 +9,21 @@ CXXEXT       = .cpp
 # Assembler sources extension (default: .asm)
 ASEXT        = .asm
 
-# C precompiled headers list
-CGCH         = 
-# C++ precompiled headers list
+# List of C headers to precompile
+CGCH         = include/main.h
+# List of C++ headers to precompile
 CXXGCH       = include/main.h
 # Source folders list
-SOURCEDIRS   = src/ src/asm
-# Space delimited list of source files
+SOURCEDIRS   = src/ src/asm/
+# Source files list
 SOURCES      = 
 
 # Toplevel output folder (default: current folder)
 BUILDROOT    = build/
-# Where to put target? (default: BUILDROOT)
+# Where to put target under BUILDROOT? (default: BUILDROOT/)
 OUTPUTDIR    = 
-# Target name (default: parent folder's name)
-TARGET       = maketest
+# Target name (default: config file's name w/o extension)
+TARGET       = $(PROJECT)
 
 #
 # Terminal settings
@@ -70,9 +67,9 @@ FLAGSAS      = -f elf64
 
 # Linker flags
 FLAGSLD      = 
-# Dynamic libraries path
+# Libraries search path
 LIBRARYPATH  = 
-# Dynamic libraries
+# Required libraries list
 LIBRARIES    = 
-# Required 'pkg-config' packages list (format: pkgname[:==|<=|>=version])
+# Required 'pkg-config' packages list. Format: pkgname[:==|<=|>=version]
 REQUIREPKGS  = libxine xorg-server

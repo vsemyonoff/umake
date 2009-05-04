@@ -1,0 +1,154 @@
+MakeIt
+======
+
+GNU Make based simple automation build system.
+
+Requirements
+------------
+
+Makefile was tested with:
+ - GNU make (3.81)
+ - GCC (4.2.4)
+ - yasm (0.8.0)
+ - findutils (4.2.31)
+ - bash (3.1.017)
+ - coreutils (6.12)
+ - pkg-config (0.23)
+ - Linux (2.6.27.7)
+
+There was not used any version specific features, so I think it will
+work with older and newer versions of these software.
+
+Installation
+------------
+
+Just copy Makefile to project's toplevel folder.
+
+Usage
+-----
+
+Main syntax:
+    make [project] [action] [variables]
+
+Any file with '.prj' extension is treated as configuration (project)
+file. Project name is configuration file name without extension.
+'depends.prg' is project group file which describe dependencies
+between projects in format:
+    dependent_project1 [dep_pr2 ... n]: main_project
+
+Supported actions:
+  - config: create new configuration file in makefile's
+    folder. Default configuration name is makefile's parent folder
+    name. If configuration exists it will be validated:
+
+    make config                    # create new project or validate
+                                   # all projects in `pwd`
+
+    make -f ../Makefile config     # create new project or validate
+                                   # all projects in `../`
+
+    make config CONFIGFILE=new.prj # create or validate `./new.prj`
+
+    make -f ../Makefile new config # validate `../new.prj`
+
+  - exec: execute project's target or all projects targets
+  - clean, distclean: cleanup make's output
+
+Variables description:
+CEXT        - C sources extension (default: .c).
+CXXEXT      - C++ sources extension (default: .cpp).
+ASEXT       - Assembler sources extension (default: .asm).
+CGCH        - List of C headers to precompile.
+CXXGCH      - List of C++ headers to precompile.
+SOURCEDIRS  - ALL supported sources from these folders will be
+              compiled.
+SOURCES     - Source files list to be compiled together with ALL
+              files from SOURCEDIRS.
+              If SOURCEDIRS and SOURCES are empty then MakeIt will try
+              to compile all supported sources from configuration
+              file's folder.
+BUILDROOT   - Toplevel output folder (default: current folder).
+OUTPUTDIR   - Where to put target under BUILDROOT? (default: BUILDROOT/).
+TARGET      - Target name (default: configuration file's name w/o
+              extension).
+TERMNAME    - terminal name for exec action.
+TERMOPTIONS - terminal arguments.
+FLAGSCPP    - C/C++ preprocessor flags.
+CPPMACROS   - C/C++ preprocessor macros definitions.
+CPPINCPATH  - C/C++ preprocessor include files path.
+FLAGSAPP    - Assembler preprocessor flags.
+ASMACROS    - Assembler preprocessor macros definitions.
+ASINCPATH   - Assembler preprocessor include files path.
+FLAGSC      - C compiler flags.
+FLAGSCXX    - C++ compiler flags.
+FLAGSAS     - Assembler compiler flags.
+FLAGSLD     - Linker flags.
+LIBRARYPATH - Libraries search path.
+LIBRARIES   - Required libraries list.
+REQUIREPKGS - Required 'pkg-config' packages list. Format:
+              pkgname[:==|<=|>=version], example:
+              REQUIREPKGS = libxine:>=1.1.15 xorg-server
+
+Any configuration variable may be changed from command line and stored
+in configuration file using 'config' action, for example:
+
+make BUILDROOT=../build             # build all projects and put
+                                    # output to ../build folder
+
+make project1 config FLAGSCXX=-ggdb # change CFLAGS for 'project1.prj'
+
+make project2 distclean             # remove 'project2.prj' output
+
+There are some useful read-only variables:
+
+CONFIGPATH  - configuration file path.
+PROJECT     - configuration file name w/o extension.
+
+For example:
+
+BUILDROOT = $(CONFIGPATH)
+
+This cause MakIt always place this project's output files to
+configuration file's folder.
+
+You can use any variable in configuration file and write own rules to
+configuration file, but remember that each 'config' action will
+resolve all variables, create backup and overwrite existing
+configuration file, so you need copy/paste these rules into new config
+file or just read validated config to be sure that all is OK, remove
+it and restore previous configuration from backup.
+
+MakeIt support symlinks, for example:
+
+
+src/:
+|- Makefile
+|- PROJECT1/:
+   |- Makefile -> ../Makefile
+   |- src/:
+      |- main.cpp
+      |- main.h
+   |- project1.prj
+|- PROJECT2/:
+   |- Makefile -> ../Makefile
+   |- src/:
+      |- main.cpp
+      |- main.h
+   |- project2.prj
+   |- somelib.prj -> ../PROJECT1/project1.prj
+   |- depends.prj < "project2: somelib"
+
+'make -f PROJECT2/Makefile FLAGSCXX=-O2 -m64' in 'src' folder will
+cause to build 'project1' then 'project2' with C++ compiler
+flags: -O2 -m64. See './test/maketest.prj' for other example.
+
+MakeIt will place intermediate files to:
+BUILDROOT/.obj/PROJECT/    - all object files;
+BUILDROOT/.dep/PROJECT/    - all dependency files;
+BUILDROOT/.cgch/PROJECT/   - all C precompiled headers;
+BUILDROOT/.cxxgch/PROJECT/ - all C++ precompiled headers.
+
+Troubleshooting
+---------------
+
+All bugs and questions email to: vsemyonoff@gmail.com

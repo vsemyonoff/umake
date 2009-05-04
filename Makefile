@@ -1,11 +1,24 @@
 ################################################################################
+
 #
-# Makefile
+# MakeIt - GNU Make based automation build system
 #
-# Author: Vladyslav Semyonov
-# E-mail: vsemyonoff [at] gmail.com
+# Copyright © 2009 Vladyslav Semyonov <vsemyonoff@gmail.com>
 #
-################################################################################
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
 
 .SUFFIXES:
 
@@ -15,6 +28,8 @@ all :
 
 # Empty string constant
 override EMPTY =
+# Default command interpreter
+override SHELL = bash
 
 ifeq ($(strip $(CONFIGFILE)), $(EMPTY))
 
@@ -63,7 +78,7 @@ ifeq ($(strip $(CONFIGFILE)), $(EMPTY))
 		@$(MAKE) config CONFIGFILE=$@
 
     ifeq ($(filter %, $(ACTIONS)), $(EMPTY))
-    # Projects dependencyes file
+    # Projects dependencies file
         sinclude depends.prg
     endif
 
@@ -203,7 +218,7 @@ else
         ifeq ($(strip $(SRCLIST)), $(EMPTY))
             override SRCLIST  = $(foreach ext, $(EXTLIST), $(wildcard $(CONFIGPATH)*$(ext)))
             ifeq ($(strip $(SRCLIST)), $(EMPTY))
-                override MESS = "No sources files found. Update configuration file '$(CONFIGFILE)'."
+                override MESS = "No source files found. Update configuration file '$(CONFIGFILE)'."
                 $(error $(MESS))
             endif
         endif
@@ -284,7 +299,6 @@ else
         override GCHC       = $(call inc2cgch, $(CGCHLIST))
         override GCHCXX     = $(call inc2cxxgch, $(CXXGCHLIST))
         override OBJECTS    = $(call src2obj, $(SRCLIST))
-
         override DEPENDS    = $(filter %, $(call cgchdep, $(GCHC)) \
                                           $(call cxxgchdep, $(GCHCXX)) \
                                           $(call objdep, $(OBJECTS)))
@@ -439,6 +453,7 @@ else
 
     .PHONY: config
     config:
+		@if [ -f $(CONFIGFILE) ]; then cp $(CONFIGFILE) $(CONFIGFILE).bak; fi
 		@echo "Updating configuration file: $(CONFIGFILE)"
 		@echo "#" > $(CONFIGFILE)
 		@echo "# Files settings" >> $(CONFIGFILE)
@@ -451,20 +466,20 @@ else
 		@echo "# Assembler sources extension (default: .asm)" >> $(CONFIGFILE)
 		@echo "ASEXT        = $(ASEXT)" >> $(CONFIGFILE)
 		@echo "" >> $(CONFIGFILE)
-		@echo "# C precompiled headers list" >> $(CONFIGFILE)
+		@echo "# List of C headers to precompile" >> $(CONFIGFILE)
 		@echo "CGCH         = $(CGCH)" >> $(CONFIGFILE)
-		@echo "# C++ precompiled headers list" >> $(CONFIGFILE)
+		@echo "# List of C++ headers to precompile" >> $(CONFIGFILE)
 		@echo "CXXGCH       = $(CXXGCH)" >> $(CONFIGFILE)
 		@echo "# Source folders list" >> $(CONFIGFILE)
 		@echo "SOURCEDIRS   = $(SOURCEDIRS)" >> $(CONFIGFILE)
-		@echo "# Space delimited list of source files" >> $(CONFIGFILE)
+		@echo "# Source files list" >> $(CONFIGFILE)
 		@echo "SOURCES      = $(SOURCES)" >> $(CONFIGFILE)
 		@echo "" >> $(CONFIGFILE)
 		@echo "# Toplevel output folder (default: current folder)" >> $(CONFIGFILE)
 		@echo "BUILDROOT    = $(BUILDROOT)" >> $(CONFIGFILE)
-		@echo "# Where to put target? (default: BUILDROOT)" >> $(CONFIGFILE)
+		@echo "# Where to put target under BUILDROOT? (default: BUILDROOT/)" >> $(CONFIGFILE)
 		@echo "OUTPUTDIR    = $(OUTPUTDIR)" >> $(CONFIGFILE)
-		@echo "# Target name (default: parent folder's name)" >> $(CONFIGFILE)
+		@echo "# Target name (default: config file's name w/o extension)" >> $(CONFIGFILE)
 		@echo "TARGET       = $(TARGET)" >> $(CONFIGFILE)
 		@echo "" >> $(CONFIGFILE)
 		@echo "#" >> $(CONFIGFILE)
@@ -509,11 +524,11 @@ else
 		@echo "" >> $(CONFIGFILE)
 		@echo "# Linker flags" >> $(CONFIGFILE)
 		@echo "FLAGSLD      = $(FLAGSLD)">> $(CONFIGFILE)
-		@echo "# Dynamic libraries path" >> $(CONFIGFILE)
+		@echo "# Libraries search path" >> $(CONFIGFILE)
 		@echo "LIBRARYPATH  = $(LIBRARYPATH)">> $(CONFIGFILE)
-		@echo "# Dynamic libraries" >> $(CONFIGFILE)
+		@echo "# Required libraries list" >> $(CONFIGFILE)
 		@echo "LIBRARIES    = $(LIBRARIES)" >> $(CONFIGFILE)
-		@echo "# Required 'pkg-config' packages list (format: pkgname[:==|<=|>=version])" >> $(CONFIGFILE)
+		@echo "# Required 'pkg-config' packages list. Format: pkgname[:==|<=|>=version]" >> $(CONFIGFILE)
 		@echo "REQUIREPKGS  = $(REQUIREPKGS)" >> $(CONFIGFILE)
 
 endif # ifeq ($(strip $(CONFIGFILE)), $(EMPTY))

@@ -1,15 +1,2 @@
-Add:
-- C support (gcc) -- DONE
-- C++ support (g++) -- DONE
-- Assembler support (yasm) -- DONE
-- C/C++ precompiled headers support (gcc) -- DONE
-- symlinks support -- DONE
-- pkgconfig support -- DONE
-- custom file extensions support -- DONE
-- profiler support (gprof) -- REJECTED
-- documentation generation support (doxygen) -- REJECTED
-- create help file
-
-Update:
-- use VPATH instead of direct path specification -- REJECTED
-- add SOURCES filtering for known extensions -- DONE
+- add install/uninstall actions
+- add doxygen support
