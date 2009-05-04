@@ -39,16 +39,20 @@ ifeq ($(strip $(CONFIGFILE)), $(EMPTY))
     endif
 
     # Divide input arguments to projects and actions
-    override PROJECTS = $(filter $(notdir $(CONFIGSLIST:%.prj=%)), $(MAKECMDGOALS))
+    override PROJECTS = $(notdir $(CONFIGSLIST:%.prj=%))
     ifeq ($(strip $(PROJECTS)), $(EMPTY))
         override PROJECTS = $(notdir $(CONFIGSLIST:%.prj=%))
     endif
-    override ACTIONS = $(filter-out $(PROJECTS), $(MAKECMDGOALS))
+    override PROJECTSTOBUILD = $(filter $(PROJECTS), $(MAKECMDGOALS))
+    ifeq ($(strip $(PROJECTSTOBUILD)), $(EMPTY))
+        override PROJECTSTOBUILD = $(PROJECTS)
+    endif
+    override ACTIONS = $(filter-out $(PROJECTSTOBUILD), $(MAKECMDGOALS))
 
-    all: $(PROJECTS)
+    all: $(PROJECTSTOBUILD)
 
     .PHONY: $(ACTIONS)
-    $(ACTIONS): $(PROJECTS)
+    $(ACTIONS): $(PROJECTSTOBUILD)
 		@echo "Reached target: $@"
 
     .PHONY: $(PROJECTS)
@@ -58,8 +62,10 @@ ifeq ($(strip $(CONFIGFILE)), $(EMPTY))
     %.prj:
 		@$(MAKE) config CONFIGFILE=$@
 
+    ifeq ($(filter %, $(ACTIONS)), $(EMPTY))
     # Projects dependencyes file
-    sinclude depends.prg
+        sinclude depends.prg
+    endif
 
 else
 
