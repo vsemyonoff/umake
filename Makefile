@@ -399,7 +399,7 @@ else
 
         $(OUTPUT): $(OBJECTS)
 			@[ -d $(OUTDIR) ] || mkdir -p $(OUTDIR)
-			$(LINKER) $(LDFLAGS) -o $@ $^
+			$(LINKER) -o $@ $^ $(LDFLAGS)
 
 #
 # Build actions (phony targets)
