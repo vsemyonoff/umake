@@ -25,7 +25,7 @@ define CONFIG_TEMPLATE
 # Files settings
 #
 # Source folders list
-SRCDIRLIST   =
+SRCDIRLIST   = src
 # Source files list
 SRCLIST      =
 # Toplevel output folder (default: current folder)
@@ -33,14 +33,14 @@ BUILDROOT    =
 # Where to put target under BUILDROOT? (default: BUILDROOT/)
 BINDIR       =
 # Target name (default: config file's name w/o extension)
-TARGET       =
+TARGET       = $$(PROJECT)
 
 #########################################################################
 #
 # Terminal settings
 #
-TERMNAME     =
-TERMOPTIONS  =
+TERMNAME     = urxvtc
+TERMOPTIONS  = -e
 
 #########################################################################
 #
@@ -51,16 +51,16 @@ CPPFLAGS     =
 # C/C++ preprocessor macros definitions
 CPPMACROS    =
 # C/C++ preprocessor include files path
-CPPINCPATH   =
+CPPINCPATH   = include
 
 #########################################################################
 #
 # Compilers settings
 #
 # C compiler flags
-CFLAGS       =
+CFLAGS       = -ggdb -pipe -pedantic -Wall
 # C++ compiler flags
-CXXFLAGS     =
+CXXFLAGS     = $$(CFLAGS)
 
 #########################################################################
 #
