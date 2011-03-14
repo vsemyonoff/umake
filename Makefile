@@ -152,7 +152,7 @@ else
     # Generate sources list
     override SRCLIST += $(foreach SRCDIR, $(SRCDIRLIST), \
                             $(call rmSlash, \
-                                $(shell find $(SRCDIR) -type f -print))))
+                                $(shell find $(SRCDIR) -type f -print)))
     override SRCLIST := $(sort $(SRCLIST))
     ifeq ($(SRCLIST), $(EMPTY))
         $(error "No source files found. Update configuration file '$(CONFIGFILE)'")
