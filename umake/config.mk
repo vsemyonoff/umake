@@ -75,7 +75,6 @@ LIBRARIES    =
 
 # Required 'pkg-config' packages list. Format: pkgname[:==|<=|>=version]
 REQUIREPKGS  =
-
 endef
 
 export CONFIG_TEMPLATE
