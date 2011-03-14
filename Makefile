@@ -133,7 +133,7 @@ else
     override TARGET := $(BINDIR)$(TARGET)
 
     # Umake modules folder
-    override MODULESDIR = $(call trailSlash, $(dir $(firstword $(MAKEFILE_LIST)))modules.mk)
+    override MODULESDIR = $(call trailSlash, $(dir $(firstword $(MAKEFILE_LIST))).umake)
 #
 # Run pkg-config tests
 #
