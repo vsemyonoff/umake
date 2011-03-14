@@ -1,0 +1,55 @@
+#########################################################################
+# Files settings
+#
+# Source folders list
+SRCDIRLIST   = src
+# Source files list
+SRCLIST      =
+# Toplevel output folder (default: current folder)
+BUILDROOT    = build
+# Where to put target under BUILDROOT? (default: BUILDROOT/)
+BINDIR       =
+# Target name (default: config file's name w/o extension)
+TARGET       = $(PROJECT)
+
+#########################################################################
+#
+# Terminal settings
+#
+TERMNAME     = urxvt
+TERMOPTIONS  = -e
+
+#########################################################################
+#
+# Preprocessors settings
+#
+# C/C++ preprocessor flags
+CPPFLAGS     =
+# C/C++ preprocessor macros definitions
+CPPMACROS    = DEBUG
+# C/C++ preprocessor include files path
+CPPINCPATH   = include
+
+#########################################################################
+#
+# Compilers settings
+#
+# C compiler flags
+CFLAGS       = -ggdb -pipe -pedantic -Wall
+# C++ compiler flags
+CXXFLAGS     = $(CFLAGS)
+
+#########################################################################
+#
+# Linker settings
+#
+# Linker flags
+LDFLAGS      =
+# Libraries search path
+LIBRARYPATH  =
+# Required libraries list
+LIBRARIES    = X11
+
+# Required 'pkg-config' packages list. Format: pkgname[:==|<=|>=version]
+REQUIREPKGS  = xcb
+

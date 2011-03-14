@@ -1,6 +1,5 @@
 ################################################################################
-
-# Version: 20090504
+# Version: 20110314
 #
 # MakeIt - GNU Make based automation build system
 #
@@ -32,504 +31,152 @@ override EMPTY =
 # Default command interpreter
 override SHELL = bash
 
-ifeq ($(strip $(CONFIGFILE)), $(EMPTY))
+ifeq ($(CONFIGFILE), $(EMPTY))
 
 ################################################################################
-
 #
 # PART #1: search for configuration files & run submake
 #
-
     # Makefile's name and path
-    override MAKEFILE = $(firstword $(MAKEFILE_LIST))
-    # Configuration files search path
-    override CONFIGSPATH = $(dir $(MAKEFILE))
-
+    override MAKEFILE = $(strip $(shell readlink -f $(firstword $(MAKEFILE_LIST))))
     # Extend MAKE variable with proper makefile name
     override MAKE += --makefile $(MAKEFILE) --no-print-directory
 
-    # Search all config files in makefile's folder
-    override CONFIGSLIST = $(wildcard $(CONFIGSPATH)*.prj)
-    ifeq ($(strip $(CONFIGSLIST)), $(EMPTY))
-        override CONFIGSLIST = $(shell cd $(CONFIGSPATH) && pwd).prj
+    # Project templates list to be created
+    override TPLSLIST = $(EMPTY)
+    # Search all config files in makefile's folder and 'make' arguments (target templates)
+    override CONFIGSLIST = $(wildcard *.prj)
+    ifeq ($(CONFIGSLIST), $(EMPTY))
+        override TPLSLIST += $(notdir $(shell pwd)).prj
     endif
 
-    # Divide input arguments to projects and actions
-    override PROJECTS = $(notdir $(CONFIGSLIST:%.prj=%))
-    ifeq ($(strip $(PROJECTS)), $(EMPTY))
-        override PROJECTS = $(notdir $(CONFIGSLIST:%.prj=%))
+    # Divide input arguments to templates, projects and actions
+    override PROJECTS = $(filter $(CONFIGSLIST:%.prj=%), $(MAKECMDGOALS))
+    ifeq ($(PROJECTS), $(EMPTY))
+        override PROJECTS = $(CONFIGSLIST:%.prj=%)
     endif
-    override PROJECTSTOBUILD = $(filter $(PROJECTS), $(MAKECMDGOALS))
-    ifeq ($(strip $(PROJECTSTOBUILD)), $(EMPTY))
-        override PROJECTSTOBUILD = $(PROJECTS)
-    endif
-    override ACTIONS = $(filter-out $(PROJECTSTOBUILD), $(MAKECMDGOALS))
+    override TPLSLIST += $(filter %.prj, $(MAKECMDGOALS))
+    override ACTIONS = $(filter-out $(PROJECTS) $(TPLSLIST), $(MAKECMDGOALS))
 
-    all: $(PROJECTSTOBUILD)
+    .PHONY: $(PROJECTS) $(ACTIONS)
 
-    .PHONY: $(ACTIONS)
-    $(ACTIONS): $(PROJECTSTOBUILD)
+    all: $(TPLSLIST) $(PROJECTS)
+
+    # Actions rule
+    $(ACTIONS): $(PROJECTS)
 		@echo "Reached target: $@"
 
-    .PHONY: $(PROJECTS)
-    $(PROJECTS): %: $(CONFIGSPATH)%.prj
-		@$(MAKE) $(ACTIONS) CONFIGFILE=$<
+    # Make projects rule
+    $(PROJECTS): %: %.prj
+		@cd $(dir $(shell readlink -f $<)) && \
+			$(MAKE) $(ACTIONS) CONFIGFILE=$(notdir $(shell readlink -f $<))
 
-    %.prj:
+    # Create project templates rule
+    $(TPLSLIST): %.prj:
 		@$(MAKE) config CONFIGFILE=$@
+		@echo "Now edit '$@' and type 'make'..."
 
-    ifeq ($(filter %, $(ACTIONS)), $(EMPTY))
-    # Projects dependencies file
+    # Do not resolve depends while cleaning or generating template
+    ifeq ($(strip $(ACTIONS) $(TPLSLIST)), $(EMPTY))
         sinclude depends.prg
     endif
-
 else
 
 ################################################################################
-
 #
 # PART #2: process configuration files managed by PART #1
 #
+    # Inlcude configuration file
+    sinclude $(CONFIGFILE)
 
-#
-# Build init stuff
-#
-
-    # Configuration file's absolute path (resolve symlink if needed)
-    override CONFIGPATH   = $(dir $(shell readlink -f $(CONFIGFILE)))
     # Project's short name
-    override PROJECT      = $(basename $(notdir $(CONFIGFILE)))
-
+    override PROJECT = $(notdir $(basename $(CONFIGFILE)))
 #
 # Process configuration settings
 #
-
-    sinclude $(CONFIGFILE)
-
-    # Empty string constant (to be sure it is correct after inclusion)
-    override EMPTY        =
-
-    # Trail argument with slash function
-    override trgslash     = $(strip $(filter %/, $(1)) $(addsuffix /, $(filter-out %/, $(1))))
-    # Remove all unneeded local prepending slashes function
-    override rmprplslash  = $(strip $(patsubst ./%, %, $(1)))
-    # Remove all unneeded prepending slashes function
-    override rmprpslash   = $(strip $(patsubst /%, %, $(call rmprplslash, $(1))))
-    # Prepend argument with dot function
-    override prpdot       = $(strip $(filter .%, $(1)) $(addprefix ., $(filter-out .%, $(1))))
-
-    # Check extensions
-    ifeq ($(strip $(CEXT)), $(EMPTY))
-        override CEXT     = .c
-    else
-        override CEXT    := $(strip $(call prpdot, $(firstword $(CEXT))))
-    endif
-    ifeq ($(strip $(CXXEXT)), $(EMPTY))
-        override CXXEXT   = .cpp
-    else
-        override CXXEXT  := $(strip $(call prpdot, $(firstword $(CXXEXT))))
-    endif
-    ifeq ($(strip $(ASEXT)), $(EMPTY))
-        override ASEXT    = .asm
-    else
-        override ASEXT   := $(strip $(call prpdot, $(firstword $(ASEXT))))
+    # Objects and depends list to be extended by file type handlers
+    override OBJECTS = $(EMPTY)
+    override DEPENDS = $(EMPTY)
+#
+# Validate common variables
+#
+    ifneq ($(filter /%, $(BUILDROOT) $(BINDIR) $(SRCDIRLIST) $(SRCLIST)), $(EMPTY))
+        $(error "Absolute file names are not supported, use relative file names")
     endif
 
-    # Check C/C++ GCH lists
-    override CGCH        := $(call rmprpslash, $(CGCH))
-    override CXXGCH      := $(call rmprpslash, $(CXXGCH))
-
-    # Check sourcedirs and sources lists
-    override SOURCEDIRS  := $(call rmprpslash, $(call trgslash, $(SOURCEDIRS)))
-    override SOURCES     := $(call rmprpslash, $(SOURCES))
+    override trailSlash = $(strip $(filter %/, $(1)) $(addsuffix /, $(filter-out %/, $(1))))
+    override rmSlash    = $(strip $(patsubst ./%, %, $(1)))
+    override src2obj    = $(addprefix $(OBJDIR), $(addsuffix .o, $(1)))
+    override src2dep    = $(addprefix $(DEPDIR), $(addsuffix .d, $(1)))
+    override obj2src    = $(patsubst $(OBJDIR)%.o, %, $(1))
+    override dep2src    = $(patsubst $(DEPDIR)%.d, %, $(1))
+    override mkMacro    = $(strip $(filter -D%, $(1)) $(addprefix -D, $(filter-out -D%, $(1))))
+    override mkIncDir   = $(strip $(filter -I%, $(1)) $(addprefix -I, $(filter-out -I%, $(1))))
+    override mkLibDir   = $(strip $(filter -L%, $(1)) $(addprefix -L, $(filter-out -L%, $(1))))
+    override mkLib      = $(strip $(filter -l%, $(1)) $(addprefix -l, $(filter-out -l%, $(1))))
 
     # Check output folders
-    override BUILDROOT   := $(strip $(call trgslash, $(firstword $(BUILDROOT))))
-    override DEPDIR       = $(BUILDROOT).dep/$(notdir $(basename $(CONFIGFILE)))/
-    override CGCHDIR      = $(BUILDROOT).cgch/$(notdir $(basename $(CONFIGFILE)))/
-    override CXXGCHDIR    = $(BUILDROOT).cxxgch/$(notdir $(basename $(CONFIGFILE)))/
-    override OBJDIR       = $(BUILDROOT).obj/$(notdir $(basename $(CONFIGFILE)))/
-    override OUTPUTDIR   := $(call rmprpslash, $(call trgslash, $(firstword $(OUTPUTDIR))))
+    override BUILDROOT := $(call trailSlash, $(firstword $(BUILDROOT)))
+    override DEPDIR  = $(call trailSlash, $(BUILDROOT).dep/$(PROJECT))
+    override OBJDIR  = $(call trailSlash, $(BUILDROOT).obj/$(PROJECT))
+    override BINDIR := $(call trailSlash, $(BUILDROOT)$(firstword $(BINDIR)))
+
+    # Check source dirs list and sources list
+    ifeq ($(SRCDIRLIST), $(EMPTY))
+        override SRCDIRLIST = .
+    endif
+    override SRCLIST := $(sort $(SRCLIST))
 
     # Check target name
-    ifeq ($(strip $(TARGET)), $(EMPTY))
-        override TARGET   =  $(basename $(notdir $(CONFIGFILE)))
-    else
-        override TARGET  := $(notdir $(firstword $(TARGET)))
+    override TARGET := $(firstword $(TARGET))
+    ifeq ($(TARGET), $(EMPTY))
+        override TARGET = $(PROJECT)
     endif
+    override TARGET := $(BINDIR)$(TARGET)
 
-    # Check include and library paths
-    override CPPINCPATH  := $(call rmprplslash, $(call trgslash, $(CPPINCPATH)))
-    override ASINCPATH   := $(call rmprplslash, $(call trgslash, $(ASINCPATH)))
-    override LIBRARYPATH := $(call rmprplslash, $(call trgslash, $(LIBRARYPATH)))
-
+    # Umake modules folder
+    override MODULESDIR = $(call trailSlash, $(dir $(firstword $(MAKEFILE_LIST)))umake)
 #
-# Do not run this part while generating configuration file
+# Run pkg-config tests
 #
-
-    ifeq ($(filter config, $(MAKECMDGOALS)), $(EMPTY))
-
-        # Do not check packages while cleaning folder
-        ifeq ($(filter clean distclean, $(MAKECMDGOALS)), $(EMPTY))
-
-            ifneq ($(strip $(REQUIREPKGS)), $(EMPTY))
-
-                ifeq ($(shell which pkg-config 2> /dev/null), $(EMPTY))
-                    override MESS = "No 'pkg-config' tool found."
-                    $(error $(MESS))
-                endif
-
-                # Package name manipulation functions
-                override pkgname  = $(strip $(foreach package, $(1), $(firstword $(subst :, , $(package)))))
-                override pkgvers  = $(strip $(word 2, $(subst :, , $(firstword $(1)))))
-
-                # First of all, we need to check each required 'pkg-config' package.
-                override PKGLIST  = $(subst >=,--atleast-version=, $(REQUIREPKGS))
-                override PKGLIST := $(subst ==,--exact-version=, $(PKGLIST))
-                override PKGLIST := $(subst <=,--max-version=, $(PKGLIST))
-                override RESULT   = $(foreach package, $(PKGLIST), \
-                                       $(shell pkg-config $(call pkgvers, $(package)) \
-                                           $(call pkgname, $(package)); \
-                                               [ ! $$? == 0 ] &&  echo -n $(call pkgname, $(package))))
-                ifneq ($(strip $(RESULT)), $(EMPTY))
-                    override MESS = "$(RESULT): packages are not installed or has incompatible version number."
-                    $(error $(MESS))
-                else
-                    # Get packages information
-                    override PKGMACROS  = $(shell pkg-config --cflags-only-other $(call pkgname, $(PKGLIST)))
-                    override PKGINCPATH = $(shell pkg-config --cflags-only-I $(call pkgname, $(PKGLIST)))
-                    override PKGLIBPATH = $(shell pkg-config --libs-only-L $(call pkgname, $(PKGLIST)))
-                    override PKGLIBS    = $(shell pkg-config --libs-only-l $(call pkgname, $(PKGLIST)))
-                endif
-
-            endif
-
+    # Do not check packages while cleaning folders or creating project template
+    ifeq ($(filter config clean distclean, $(MAKECMDGOALS)), $(EMPTY))
+        ifneq ($(strip $(REQUIREPKGS)), $(EMPTY))
+            # Inlude linker rules
+            include $(MODULESDIR)pkgconfig.mk
         endif
-
+    endif
 #
 # Generate sources list
 #
+    # Generate sources list
+    override SRCLIST += $(foreach SRCDIR, $(SRCDIRLIST), \
+                            $(call rmSlash, \
+                                $(shell find $(SRCDIR) -type f -print))))
+    override SRCLIST := $(sort $(SRCLIST))
+    ifeq ($(SRCLIST), $(EMPTY))
+        $(error "No source files found. Update configuration file '$(CONFIGFILE)'")
+    endif
 
-        override EXTLIST  = $(CEXT) $(CXXEXT) $(ASEXT)
-        override SRCLIST  = $(foreach ext, $(EXTLIST), \
-                               $(foreach srcdir, $(addprefix $(CONFIGPATH), $(SOURCEDIRS)), \
-                                   $(wildcard $(srcdir)*$(ext))))
-        override SRCLIST += $(filter $(addprefix %, $(EXTLIST)), $(addprefix $(CONFIGPATH), $(SOURCES)))
-
-        ifeq ($(strip $(SRCLIST)), $(EMPTY))
-            override SRCLIST  = $(foreach ext, $(EXTLIST), $(wildcard $(CONFIGPATH)*$(ext)))
-            ifeq ($(strip $(SRCLIST)), $(EMPTY))
-                override MESS = "No source files found. Update configuration file '$(CONFIGFILE)'."
-                $(error $(MESS))
-            endif
-        endif
-
-#
-# Setup C/C++ precompiled headers lists
-#
-       override CGCHLIST    = $(addprefix $(CONFIGPATH), $(CGCH))
-       override CXXGCHLIST  = $(addprefix $(CONFIGPATH), $(CXXGCH))
-
-#
-# Setup preprocessors flags
-#
-
-        # C preprocessor flags
-        override CPPFLAGS  += $(filter %, $(FLAGSCPP) \
-                                          $(addprefix -D, $(CPPMACROS)) \
-                                          $(PKGMACROS) \
-                                          $(addprefix -I, $(CGCHDIR)) \
-                                          $(addprefix -I$(CONFIGPATH), $(filter-out /%, $(CPPINCPATH))) \
-                                          $(addprefix -I, $(filter /%, $(CPPINCPATH))) \
-                                          $(PKGINCPATH))
-
-        # C++ preprocessor flags
-        override CXXPPFLAGS = $(subst -I$(CGCHDIR),-I$(CXXGCHDIR), $(CPPFLAGS))
-
-        # Assembler preprocessor flags
-        override APPFLAGS  += $(filter %, $(addprefix -D, $(ASMACROS)) \
-                                          $(addprefix -I$(CONFIGPATH), $(filter-out /%, $(ASINCPATH))) \
-                                          $(addprefix -I, $(filter /%, $(ASINCPATH))))
-
-#
-# Setup compilers flags
-#
-
-        # C compiler flags
-        override CFLAGS    += $(filter %, $(FLAGSC))
-        # C++ compiler flags
-        override CXXFLAGS  += $(filter %, $(FLAGSCXX))
-        # Assembler compiler flags
-        override ASFLAGS   += $(filter %, $(FLAGSAS))
-
-#
-# Setup linker flags
-#
-
-        override LDFLAGS   += $(filter %, $(FLAGSLD) \
-                                          $(addprefix -L$(CONFIGPATH), $(filter-out /%, $(LIBRARYPATH))) \
-                                          $(addprefix -L, $(filter /%, $(LIBRARYPATH))) \
-                                          $(PKGLIBPATH) \
-                                          $(addprefix -l, $(LIBRARIES)) \
-                                          $(PKGLIBS))
-#
-# Setup internal variables
-#
-
-        # Filenames conversion functions
-        override inc2cgch   = $(foreach inc, $(1), $(addprefix $(CGCHDIR), $(notdir $(inc)).gch))
-        override inc2cxxgch = $(foreach inc, $(1), $(addprefix $(CXXGCHDIR), $(notdir $(inc)).gch))
-        override src2obj    = $(foreach src, $(1), $(addprefix $(OBJDIR), $(notdir $(src)).o))
-
-        override cgchdep    = $(foreach gch, $(1), $(addprefix $(DEPDIR), c_$(notdir $(gch)).d))
-        override cxxgchdep  = $(foreach gch, $(1), $(addprefix $(DEPDIR), cxx_$(notdir $(gch)).d))
-        override objdep     = $(foreach obj, $(1), $(addprefix $(DEPDIR), $(notdir $(obj)).d))
-
-        override dep2cgch   = $(filter %$(patsubst c_%, %, $(basename $(notdir $(1)))), $(GCHC))
-        override dep2cxxgch = $(filter %$(patsubst cxx_%, %, $(basename $(notdir $(1)))), $(GCHCXX))
-        override cgch2inc   = $(filter %$(patsubst c_%, %, $(basename $(notdir $(1)))), $(CGCHLIST))
-        override cxxgch2inc = $(filter %$(patsubst cxx_%, %, $(basename $(notdir $(1)))), $(CXXGCHLIST))
-        override dep2cinc   = $(filter %$(patsubst c_%, %, $(patsubst %.gch.d, %, $(notdir $(1)))), $(CGCHLIST))
-        override dep2cxxinc = $(filter %$(patsubst cxx_%, %, $(patsubst %.gch.d, %, $(notdir $(1)))), $(CXXGCHLIST))
-
-        override dep2src    = $(filter %$(notdir $(patsubst %.o.d, %, $(1))), $(SRCLIST))
-        override dep2obj    = $(strip $(subst $(DEPDIR),$(OBJDIR), $(basename $(1))))
-        override obj2src    = $(filter %$(notdir $(basename $(1))), $(SRCLIST))
-
-        # Intermediate files
-        override GCHC       = $(call inc2cgch, $(CGCHLIST))
-        override GCHCXX     = $(call inc2cxxgch, $(CXXGCHLIST))
-        override OBJECTS    = $(call src2obj, $(SRCLIST))
-        override DEPENDS    = $(filter %, $(call cgchdep, $(GCHC)) \
-                                          $(call cxxgchdep, $(GCHCXX)) \
-                                          $(call objdep, $(OBJECTS)))
-
-        # Output folder
-        override OUTDIR     = $(BUILDROOT)$(OUTPUTDIR)
-        # Target's full name
-        override OUTPUT     = $(OUTDIR)$(TARGET)
-
-        # Use YASM for asm compilation and preprocessing
-        override AS         = yasm
-
-        # Select linker and linker flags
-        override LINKER     = $(LD)
-        ifneq ($(filter %$(CEXT), $(SRCLIST)), $(EMPTY))
-            override LINKER = $(strip $(CC) $(CFLAGS))
-        endif
-        ifneq ($(filter %$(CXXEXT), $(SRCLIST)), $(EMPTY))
-            override LINKER = $(strip $(CXX) $(CXXFLAGS))
-        endif
+    # Generate extensions list from sources list
+    override EXTLIST = $(sort $(patsubst .%, %, $(suffix $(SRCLIST))))
 
 ################################################################################
-
 #
 # PART #3: make rules for PART #2
 #
-
-#
-# Build targets
-#
-
-        # Dependency files generation rules
-        c_%.gch.d:
-			@[ -d $(DEPDIR) ] || mkdir -p $(DEPDIR)
-			@echo "Updating dependency file: $(call dep2cgch, $@) -> $@"
-			@echo $(patsubst %:, \
-						$(call dep2cgch, $@) $@: $(CONFIGFILE), \
-							$(shell $(CC) -M $(CPPFLAGS) $(call dep2cinc, $@))) > $@
-
-        cxx_%.gch.d:
-			@[ -d $(DEPDIR) ] || mkdir -p $(DEPDIR)
-			@echo "Updating dependency file: $(call dep2cxxgch, $@) -> $@"
-			@echo $(patsubst %:, \
-						$(call dep2cxxgch, $@) $@: $(CONFIGFILE), \
-							$(shell $(CXX) -M $(CXXPPFLAGS) $(call dep2cxxinc, $@))) > $@
-
-        %$(CEXT).o.d:
-			@[ -d $(DEPDIR) ] || mkdir -p $(DEPDIR)
-			@echo "Updating dependency file: $(call dep2obj, $@) -> $@"
-			@echo $(patsubst %:, \
-						$(call dep2obj, $@) $@: $(CONFIGFILE), \
-							$(shell $(CC) -M $(CPPFLAGS) $(call dep2src, $@))) > $@
-
-        %$(CXXEXT).o.d:
-			@[ -d $(DEPDIR) ] || mkdir -p $(DEPDIR)
-			@echo "Updating dependency file: $(call dep2obj, $@) -> $@"
-			@echo $(patsubst %:, \
-						$(call dep2obj, $@) $@: $(CONFIGFILE), \
-							$(shell $(CXX) -M $(CXXPPFLAGS) $(call dep2src, $@))) > $@
-
-        %$(ASEXT).o.d:
-			@[ -d $(DEPDIR) ] || mkdir -p $(DEPDIR)
-			@echo "Updating dependency file: $(call dep2obj, $@) -> $@"
-			@echo $(patsubst %:, \
-						$(call dep2obj, $@) $@: $(CONFIGFILE), \
-							$(shell $(AS) -M $(APPFLAGS) $(call dep2src, $@))) > $@
-
-        # Object files generation rules
-        $(GCHC): %:
-			@[ -d $(CGCHDIR) ] || mkdir -p $(CGCHDIR)
-			$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ $(call cgch2inc, $@)
-
-        $(GCHCXX): %:
-			@[ -d $(CXXGCHDIR) ] || mkdir -p $(CXXGCHDIR)
-			$(CXX) $(CXXFLAGS) $(CXXPPFLAGS) -o $@ $(call cxxgch2inc, $@)
-
-        %$(CEXT).o:
-			@[ -d $(OBJDIR) ] || mkdir -p $(OBJDIR)
-			$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(call obj2src, $@)
-
-        %$(CXXEXT).o:
-			@[ -d $(OBJDIR) ] || mkdir -p $(OBJDIR)
-			$(CXX) $(CXXFLAGS) $(CXXPPFLAGS) -c -o $@ $(call obj2src, $@)
-
-        %$(ASEXT).o:
-			@[ -d $(OBJDIR) ] || mkdir -p $(OBJDIR)
-			$(AS) $(ASFLAGS) $(APPFLAGS) -o $@ $(call obj2src, $@)
-
-        # Main target rules
+    all: $(TARGET)
+    ifeq ($(filter config, $(MAKECMDGOALS)), $(EMPTY))
+        sinclude $(addprefix $(MODULESDIR)handlers/, $(addsuffix .mk, $(EXTLIST)))
         ifeq ($(filter clean distclean, $(MAKECMDGOALS)), $(EMPTY))
             sinclude $(DEPENDS)
+            include $(MODULESDIR)linker.mk
+            include $(MODULESDIR)exec.mk
+        else
+            include $(MODULESDIR)clean.mk
+            include $(MODULESDIR)distclean.mk
         endif
-
-        $(filter %$(CEXT).o, $(OBJECTS)): $(GCHC)
-
-        $(filter %$(CXXEXT).o, $(OBJECTS)): $(GCHCXX)
-
-        $(OUTPUT): $(OBJECTS)
-			@[ -d $(OUTDIR) ] || mkdir -p $(OUTDIR)
-			$(LINKER) -o $@ $^ $(LDFLAGS)
-
-#
-# Build actions (phony targets)
-#
-
-        # Previously defined as .PHONY
-        all: $(OUTPUT)
-
-        .PHONY: exec
-        exec: $(OUTPUT)
-			@exec $(TERMINAL) $(OUTPUT)
-
-        .PHONY: distclean
-        distclean: clean
-			@_cleandir() { \
-			if [ -d "$$1" ]; then \
-				if [ "`find "$$1" -type f`" ==  "" ]; then \
-					$(RM) -rv "$$1"; \
-					PARENT=`dirname "$$1"`; \
-					if [ ! "$$PARENT" == "." ] || [ ! "$$PARENT" == "/" ]; then \
-						_cleandir "$$PARENT"; \
-					fi \
-				fi \
-			fi \
-			}; \
-			$(RM) -v $(GCHC); \
-			_cleandir $(CGCHDIR); \
-			$(RM) -v $(GCHCXX); \
-			_cleandir $(CXXGCHDIR); \
-			$(RM) -v $(OUTPUT); \
-			_cleandir $(OUTDIR);
-
-        .PHONY: clean
-        clean:
-			@_cleandir() { \
-			if [ -d "$$1" ]; then \
-				if [ "`find "$$1" -type f`" ==  "" ]; then \
-					$(RM) -rv "$$1"; \
-					PARENT=`dirname "$$1"`; \
-					if [ ! "$$PARENT" == "." ] || [ ! "$$PARENT" == "/" ]; then \
-						_cleandir "$$PARENT"; \
-					fi \
-				fi \
-			fi \
-			}; \
-			$(RM) -v $(OBJECTS); \
-			_cleandir $(OBJDIR); \
-			$(RM) -v $(DEPENDS); \
-			_cleandir $(DEPDIR);
-
-    endif # ifeq ($(filter config, $(MAKECMDGOALS)), $(EMPTY))
-
-    .PHONY: config
-    config:
-		@if [ -f $(CONFIGFILE) ]; then cp $(CONFIGFILE) $(CONFIGFILE).bak; fi
-		@echo "Updating configuration file: $(CONFIGFILE)"
-		@echo "#" > $(CONFIGFILE)
-		@echo "# Files settings" >> $(CONFIGFILE)
-		@echo "#" >> $(CONFIGFILE)
-		@echo "" >> $(CONFIGFILE)
-		@echo "# C sources extension (default: .c)" >> $(CONFIGFILE)
-		@echo "CEXT         = $(CEXT)" >> $(CONFIGFILE)
-		@echo "# C++ sources extension (default: .cpp)" >> $(CONFIGFILE)
-		@echo "CXXEXT       = $(CXXEXT)" >> $(CONFIGFILE)
-		@echo "# Assembler sources extension (default: .asm)" >> $(CONFIGFILE)
-		@echo "ASEXT        = $(ASEXT)" >> $(CONFIGFILE)
-		@echo "" >> $(CONFIGFILE)
-		@echo "# List of C headers to precompile" >> $(CONFIGFILE)
-		@echo "CGCH         = $(CGCH)" >> $(CONFIGFILE)
-		@echo "# List of C++ headers to precompile" >> $(CONFIGFILE)
-		@echo "CXXGCH       = $(CXXGCH)" >> $(CONFIGFILE)
-		@echo "# Source folders list" >> $(CONFIGFILE)
-		@echo "SOURCEDIRS   = $(SOURCEDIRS)" >> $(CONFIGFILE)
-		@echo "# Source files list" >> $(CONFIGFILE)
-		@echo "SOURCES      = $(SOURCES)" >> $(CONFIGFILE)
-		@echo "" >> $(CONFIGFILE)
-		@echo "# Toplevel output folder (default: current folder)" >> $(CONFIGFILE)
-		@echo "BUILDROOT    = $(BUILDROOT)" >> $(CONFIGFILE)
-		@echo "# Where to put target under BUILDROOT? (default: BUILDROOT/)" >> $(CONFIGFILE)
-		@echo "OUTPUTDIR    = $(OUTPUTDIR)" >> $(CONFIGFILE)
-		@echo "# Target name (default: config file's name w/o extension)" >> $(CONFIGFILE)
-		@echo "TARGET       = $(TARGET)" >> $(CONFIGFILE)
-		@echo "" >> $(CONFIGFILE)
-		@echo "#" >> $(CONFIGFILE)
-		@echo "# Terminal settings" >> $(CONFIGFILE)
-		@echo "#" >> $(CONFIGFILE)
-		@echo "" >> $(CONFIGFILE)
-		@echo "TERMNAME     = $(TERMNAME)" >> $(CONFIGFILE)
-		@echo "TERMOPTIONS  = $(TERMOPTIONS)" >> $(CONFIGFILE)
-		@echo "" >> $(CONFIGFILE)
-		@echo "#" >> $(CONFIGFILE)
-		@echo "# Preprocessors settings" >> $(CONFIGFILE)
-		@echo "#" >> $(CONFIGFILE)
-		@echo "" >> $(CONFIGFILE)
-		@echo "# C/C++ preprocessor flags" >> $(CONFIGFILE)
-		@echo "FLAGSCPP     = $(FLAGSCPP)" >> $(CONFIGFILE)
-		@echo "# C/C++ preprocessor macros definitions" >> $(CONFIGFILE)
-		@echo "CPPMACROS    = $(CPPMACROS)" >> $(CONFIGFILE)
-		@echo "# C/C++ preprocessor include files path" >> $(CONFIGFILE)
-		@echo "CPPINCPATH   = $(CPPINCPATH)" >> $(CONFIGFILE)
-		@echo "" >> $(CONFIGFILE)
-		@echo "# Assembler preprocessor flags" >> $(CONFIGFILE)
-		@echo "FLAGSAPP     = $(FLAGSAPP)" >> $(CONFIGFILE)
-		@echo "# Assembler preprocessor macros definitions" >> $(CONFIGFILE)
-		@echo "ASMACROS     = $(ASMACROS)" >> $(CONFIGFILE)
-		@echo "# Assembler preprocessor include files path" >> $(CONFIGFILE)
-		@echo "ASINCPATH    = $(ASINCPATH)" >> $(CONFIGFILE)
-		@echo "" >> $(CONFIGFILE)
-		@echo "#" >> $(CONFIGFILE)
-		@echo "# Compilers settings" >> $(CONFIGFILE)
-		@echo "#" >> $(CONFIGFILE)
-		@echo "" >> $(CONFIGFILE)
-		@echo "# C compiler flags" >> $(CONFIGFILE)
-		@echo "FLAGSC       = $(FLAGSC)" >> $(CONFIGFILE)
-		@echo "# C++ compiler flags" >> $(CONFIGFILE)
-		@echo "FLAGSCXX     = $(FLAGSCXX)" >> $(CONFIGFILE)
-		@echo "# Assembler compiler flags" >> $(CONFIGFILE)
-		@echo "FLAGSAS      = $(FLAGSAS)" >> $(CONFIGFILE)
-		@echo "" >> $(CONFIGFILE)
-		@echo "#" >> $(CONFIGFILE)
-		@echo "# Linker settings" >> $(CONFIGFILE)
-		@echo "#" >> $(CONFIGFILE)
-		@echo "" >> $(CONFIGFILE)
-		@echo "# Linker flags" >> $(CONFIGFILE)
-		@echo "FLAGSLD      = $(FLAGSLD)">> $(CONFIGFILE)
-		@echo "# Libraries search path" >> $(CONFIGFILE)
-		@echo "LIBRARYPATH  = $(LIBRARYPATH)">> $(CONFIGFILE)
-		@echo "# Required libraries list" >> $(CONFIGFILE)
-		@echo "LIBRARIES    = $(LIBRARIES)" >> $(CONFIGFILE)
-		@echo "# Required 'pkg-config' packages list. Format: pkgname[:==|<=|>=version]" >> $(CONFIGFILE)
-		@echo "REQUIREPKGS  = $(REQUIREPKGS)" >> $(CONFIGFILE)
-
+    else
+        include $(MODULESDIR)config.mk
+    endif
 endif # ifeq ($(strip $(CONFIGFILE)), $(EMPTY))
