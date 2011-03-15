@@ -35,6 +35,6 @@ override LDFLAGS  := $(strip $(LDFLAGS) $(PKGLDFLAGS) \
                              $(PKGLIBS))
 
 $(TARGET):
-	@[ ! -z $(BINDIR) ] && mkdir -p $(BINDIR)
+	@if [ "$(BINDIR)" != "" ]; then  mkdir -p "$(BINDIR)"; fi
 	$(strip $(LINKER) -o $@ $^ $(LDFLAGS))
 
