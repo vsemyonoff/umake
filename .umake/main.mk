@@ -25,7 +25,7 @@ $(ACTIONS): $(PROJECTS)
 	@echo "Reached target: $@"
 
 # Make projects rule
-$(PROJECTS): %: %.prj
+$(CONFIGSLIST:%.prj=%): %: %.prj
 	@cd $(dir $(shell readlink -f $<)) && \
 		$(MAKE) $(ACTIONS) CONFIGFILE=$(notdir $(shell readlink -f $<))
 
