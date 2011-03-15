@@ -20,18 +20,16 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-.PHONY: clean
-clean:
-	@_cleandir() { \
-	if [ -d "$$1" ]; then \
-		if [ "`find "$$1" -type f`" ==  "" ]; then \
-			$(RM) -rv "$$1"; \
-			PARENT=`dirname "$$1"`; \
-			if [ ! "$$PARENT" == "." ] || [ ! "$$PARENT" == "/" ]; then \
-				_cleandir "$$PARENT"; \
-			fi \
-		fi \
-	fi \
-	}; \
-	_cleandir $(DEPDIR); \
-	_cleandir $(OBJDIR);
+# Actions rule
+$(ACTIONS): $(PROJECTS)
+	@echo "Reached target: $@"
+
+# Make projects rule
+$(PROJECTS): %: %.prj
+	@cd $(dir $(shell readlink -f $<)) && \
+		$(MAKE) $(ACTIONS) CONFIGFILE=$(notdir $(shell readlink -f $<))
+
+# Create project templates rule
+$(TPLSLIST): %.prj:
+	@$(MAKE) config CONFIGFILE=$@
+	@echo "Now edit '$@' and type 'make'..."

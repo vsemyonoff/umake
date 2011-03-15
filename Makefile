@@ -31,14 +31,29 @@ override EMPTY =
 # Default command interpreter
 override SHELL = bash
 
+# Some functions
+override trailSlash = $(strip $(filter %/, $(1)) $(addsuffix /, $(filter-out %/, $(1))))
+override rmSlash    = $(strip $(patsubst ./%, %, $(1)))
+override src2obj    = $(addprefix $(OBJDIR), $(addsuffix .o, $(1)))
+override src2dep    = $(addprefix $(DEPDIR), $(addsuffix .d, $(1)))
+override obj2src    = $(patsubst $(OBJDIR)%.o, %, $(1))
+override dep2src    = $(patsubst $(DEPDIR)%.d, %, $(1))
+override mkMacro    = $(strip $(filter -D%, $(1)) $(addprefix -D, $(filter-out -D%, $(1))))
+override mkIncDir   = $(strip $(filter -I%, $(1)) $(addprefix -I, $(filter-out -I%, $(1))))
+override mkLibDir   = $(strip $(filter -L%, $(1)) $(addprefix -L, $(filter-out -L%, $(1))))
+override mkLib      = $(strip $(filter -l%, $(1)) $(addprefix -l, $(filter-out -l%, $(1))))
+
+# Makefile's name and path
+override MAKEFILE = $(strip $(shell readlink -f $(firstword $(MAKEFILE_LIST))))
+# Umake modules folder
+override MODULESDIR = $(call trailSlash, $(dir $(MAKEFILE)).umake)
+
 ifeq ($(CONFIGFILE), $(EMPTY))
 
 ################################################################################
 #
 # PART #1: search for configuration files & run submake
 #
-    # Makefile's name and path
-    override MAKEFILE = $(strip $(shell readlink -f $(firstword $(MAKEFILE_LIST))))
     # Extend MAKE variable with proper makefile name
     override MAKE += --makefile $(MAKEFILE) --no-print-directory
 
@@ -59,22 +74,8 @@ ifeq ($(CONFIGFILE), $(EMPTY))
     override ACTIONS = $(filter-out $(PROJECTS) $(TPLSLIST), $(MAKECMDGOALS))
 
     .PHONY: $(PROJECTS) $(ACTIONS)
-
     all: $(TPLSLIST) $(PROJECTS)
-
-    # Actions rule
-    $(ACTIONS): $(PROJECTS)
-		@echo "Reached target: $@"
-
-    # Make projects rule
-    $(PROJECTS): %: %.prj
-		@cd $(dir $(shell readlink -f $<)) && \
-			$(MAKE) $(ACTIONS) CONFIGFILE=$(notdir $(shell readlink -f $<))
-
-    # Create project templates rule
-    $(TPLSLIST): %.prj:
-		@$(MAKE) config CONFIGFILE=$@
-		@echo "Now edit '$@' and type 'make'..."
+    include $(MODULESDIR)main.mk
 
     # Do not resolve depends while cleaning or generating template
     ifeq ($(strip $(ACTIONS) $(TPLSLIST)), $(EMPTY))
@@ -86,96 +87,75 @@ else
 #
 # PART #2: process configuration files managed by PART #1
 #
-    # Inlcude configuration file
-    sinclude $(CONFIGFILE)
+    ifneq ($(filter config, $(MAKECMDGOALS)), $(EMPTY))
+        include $(MODULESDIR)config.mk
+    else
+        # Inlcude configuration file
+        sinclude $(CONFIGFILE)
 
-    # Project's short name
-    override PROJECT = $(notdir $(basename $(CONFIGFILE)))
-#
-# Process configuration settings
-#
-    # Objects and depends list to be extended by file type handlers
-    override OBJECTS = $(EMPTY)
-    override DEPENDS = $(EMPTY)
+        # Project's short name
+        override PROJECT = $(notdir $(basename $(CONFIGFILE)))
 #
 # Validate common variables
 #
-    ifneq ($(filter /%, $(BUILDROOT) $(BINDIR) $(SRCDIRLIST) $(SRCLIST)), $(EMPTY))
-        $(error "Absolute file names are not supported, use relative file names")
-    endif
+        ifneq ($(filter /%, $(BUILDROOT) $(BINDIR) $(SRCDIRLIST) $(SRCLIST)), $(EMPTY))
+            $(error "Absolute file names are not supported, use relative file names")
+        endif
 
-    override trailSlash = $(strip $(filter %/, $(1)) $(addsuffix /, $(filter-out %/, $(1))))
-    override rmSlash    = $(strip $(patsubst ./%, %, $(1)))
-    override src2obj    = $(addprefix $(OBJDIR), $(addsuffix .o, $(1)))
-    override src2dep    = $(addprefix $(DEPDIR), $(addsuffix .d, $(1)))
-    override obj2src    = $(patsubst $(OBJDIR)%.o, %, $(1))
-    override dep2src    = $(patsubst $(DEPDIR)%.d, %, $(1))
-    override mkMacro    = $(strip $(filter -D%, $(1)) $(addprefix -D, $(filter-out -D%, $(1))))
-    override mkIncDir   = $(strip $(filter -I%, $(1)) $(addprefix -I, $(filter-out -I%, $(1))))
-    override mkLibDir   = $(strip $(filter -L%, $(1)) $(addprefix -L, $(filter-out -L%, $(1))))
-    override mkLib      = $(strip $(filter -l%, $(1)) $(addprefix -l, $(filter-out -l%, $(1))))
+        # Check output folders
+        override BUILDROOT := $(call trailSlash, $(firstword $(BUILDROOT)))
+        override DEPDIR  = $(call trailSlash, $(BUILDROOT).dep/$(PROJECT))
+        override OBJDIR  = $(call trailSlash, $(BUILDROOT).obj/$(PROJECT))
+        override BINDIR := $(call trailSlash, $(BUILDROOT)$(firstword $(BINDIR)))
 
-    # Check output folders
-    override BUILDROOT := $(call trailSlash, $(firstword $(BUILDROOT)))
-    override DEPDIR  = $(call trailSlash, $(BUILDROOT).dep/$(PROJECT))
-    override OBJDIR  = $(call trailSlash, $(BUILDROOT).obj/$(PROJECT))
-    override BINDIR := $(call trailSlash, $(BUILDROOT)$(firstword $(BINDIR)))
+        # Check source dirs list and sources list
+        override SRCDIRLIST := $(sort $(SRCDIRLIST))
+        override SRCLIST := $(sort $(SRCLIST))
 
-    # Check source dirs list and sources list
-    override SRCDIRLIST := $(sort $(SRCDIRLIST))
-    override SRCLIST := $(sort $(SRCLIST))
-
-    # Check target name
-    override TARGET := $(firstword $(TARGET))
-    ifeq ($(TARGET), $(EMPTY))
-        override TARGET = $(PROJECT)
-    endif
-    override TARGET := $(BINDIR)$(TARGET)
-
-    # Umake modules folder
-    override MODULESDIR = $(call trailSlash, $(dir $(firstword $(MAKEFILE_LIST))).umake)
+        # Check target name
+        override TARGET := $(firstword $(TARGET))
+        ifeq ($(TARGET), $(EMPTY))
+            override TARGET = $(PROJECT)
+        endif
+        override TARGET := $(BINDIR)$(TARGET)
 #
 # Run pkg-config tests
 #
-    # Do not check packages while cleaning folders or creating project template
-    ifeq ($(filter config clean distclean, $(MAKECMDGOALS)), $(EMPTY))
-        ifneq ($(strip $(REQUIREPKGS)), $(EMPTY))
-            # Inlude linker rules
-            include $(MODULESDIR)pkgconfig.mk
+        # Do not check packages while cleaning folders or creating project template
+        ifeq ($(filter config clean distclean, $(MAKECMDGOALS)), $(EMPTY))
+            ifneq ($(strip $(REQUIREPKGS)), $(EMPTY))
+                # Inlude linker rules
+                include $(MODULESDIR)pkgconfig.mk
+            endif
         endif
-    endif
 #
 # Generate sources list
 #
-    # Generate sources list
-    override SRCLIST += $(foreach SRCDIR, $(SRCDIRLIST), \
-                            $(call rmSlash, \
-                                $(shell find $(SRCDIR) -type f -print)))
-    override SRCLIST := $(sort $(SRCLIST))
-    ifeq ($(SRCLIST), $(EMPTY))
-        $(error "No source files found. Update configuration file '$(CONFIGFILE)'")
-    endif
+        # Generate sources list
+        override SRCLIST += $(foreach SRCDIR, $(SRCDIRLIST), \
+                                $(call rmSlash, \
+                                    $(shell find $(SRCDIR) -type f -print)))
+        override SRCLIST := $(sort $(SRCLIST))
+        ifeq ($(SRCLIST), $(EMPTY))
+            $(error "No source files found. Please, update configuration file '$(CONFIGFILE)'")
+        endif
 
-    # Generate extensions list from sources list
-    override EXTLIST = $(sort $(patsubst .%, %, $(suffix $(SRCLIST))))
+        # Generate extensions list from sources list
+        override EXTLIST = $(sort $(patsubst .%, %, $(suffix $(SRCLIST))))
 
 ################################################################################
 #
 # PART #3: make rules for PART #2
 #
-    all: $(TARGET)
-    ifeq ($(filter config, $(MAKECMDGOALS)), $(EMPTY))
+        all: $(TARGET)
         sinclude $(addprefix $(MODULESDIR)handlers/, $(addsuffix .mk, $(EXTLIST)))
         ifeq ($(filter clean distclean, $(MAKECMDGOALS)), $(EMPTY))
-            sinclude $(DEPENDS)
-            include $(MODULESDIR)linker.mk
+            include $(MODULESDIR)link.mk
             include $(MODULESDIR)exec.mk
             include $(MODULESDIR)tags.mk
         else
             include $(MODULESDIR)clean.mk
             include $(MODULESDIR)distclean.mk
         endif
-    else
-        include $(MODULESDIR)config.mk
-    endif
+    endif # ifneq ($(filter config, $(MAKECMDGOALS)), $(EMPTY))
 endif # ifeq ($(strip $(CONFIGFILE)), $(EMPTY))

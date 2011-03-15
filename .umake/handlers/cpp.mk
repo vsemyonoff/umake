@@ -20,33 +20,41 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-# C++ preprocessor flags
-override CXX_PPFLAGS = $(strip $(CPPFLAGS) \
-                               $(call mkMacro, $(CPPMACROS)) \
-                               $(PKGMACROS) \
-                               $(call mkIncDir, $(CPPINCPATH)) \
-                               $(PKGINCPATH))
-# C++ compiler flags
-override CXXFLAGS   := $(strip $(CXXFLAGS))
-
 # Generate src/deps/obj lists
 override CXXSRCLIST  = $(filter %.cpp, $(SRCLIST))
-override CXXOBJS     = $(call src2obj, $(CXXSRCLIST))
-override CXXDEPS     = $(call src2dep, $(CXXSRCLIST))
+override CXXOBJECTS  = $(call src2obj, $(CXXSRCLIST))
+override CXXDEPENDS  = $(call src2dep, $(CXXSRCLIST))
 
-# Update global variables
-override OBJECTS    += $(CXXOBJS)
-override DEPENDS    += $(CXXDEPS)
+ifeq ($(filter clean distclean, $(MAKECMDGOALS)), $(EMPTY))
+    # C++ preprocessor flags
+    override CXX_PPFLAGS = $(strip $(CPPFLAGS) \
+                                   $(call mkMacro, $(CPPMACROS)) \
+                                   $(PKGMACROS) \
+                                   $(call mkIncDir, $(CPPINCPATH)) \
+                                   $(PKGINCPATH))
+    # C++ compiler flags
+    override CXXFLAGS   := $(strip $(CXXFLAGS))
 
-# Dependency rule
-$(CXXDEPS): %:
-	@echo "Updating dependency file: $(call dep2src, $@) -> $@"
-	@mkdir -p $(dir $@)
-	@echo $(patsubst %:, \
-				$(call src2obj, $(call dep2src, $@)) $@: $(CONFIGFILE), \
-					$(shell $(CXX) -MM $(CXX_PPFLAGS) $(call dep2src, $@))) > $@
+    # Dependency rule
+    $(CXXDEPENDS): %:
+		@echo "Updating dependency file: $(call dep2src, $@) -> $@"
+		@mkdir -p $(dir $@)
+		@echo $(patsubst %:, \
+					$(call src2obj, $(call dep2src, $@)) $@: $(CONFIGFILE), \
+						$(shell $(CXX) -MM $(CXX_PPFLAGS) $(call dep2src, $@))) > $@
 
-# Object rule
-$(CXXOBJS): %:
-	@mkdir -p $(dir $@)
-	$(CXX) $(strip $(CXXFLAGS) $(CXX_PPFLAGS) -c -o $@ $(call obj2src, $@))
+    # Object rule
+    $(CXXOBJECTS): %:
+		@mkdir -p $(dir $@)
+		$(CXX) $(strip $(CXXFLAGS) $(CXX_PPFLAGS) -c -o $@ $(call obj2src, $@))
+
+    $(TARGET): $(CXXOBJECTS)
+
+    sinclude $(CXXDEPENDS)
+else
+    # Cleanup rules
+    cxxclean:
+		@$(RM) -v $(CXXDEPENDS) $(CXXOBJECTS)
+
+    clean: cxxclean
+endif

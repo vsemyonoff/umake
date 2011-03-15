@@ -34,7 +34,7 @@ override LDFLAGS  := $(strip $(LDFLAGS) $(PKGLDFLAGS) \
                              $(call mkLib, $(LIBRARIES)) \
                              $(PKGLIBS))
 
-$(TARGET): $(OBJECTS)
+$(TARGET):
 	@[ ! -z $(BINDIR) ] && mkdir -p $(BINDIR)
 	$(strip $(LINKER) -o $@ $^ $(LDFLAGS))
 

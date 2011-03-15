@@ -20,33 +20,41 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-# C preprocessor flags
-override C_PPFLAGS = $(strip $(CPPFLAGS) \
-                             $(call mkMacro, $(CPPMACROS)) \
-                             $(PKGMACROS) \
-                             $(call mkIncDir, $(CPPINCPATH)) \
-                             $(PKGINCPATH))
-# C++ compiler flags
-override CFLAGS   := $(strip $(CFLAGS))
-
 # Generate src/deps/obj lists
 override CSRCLIST  = $(filter %.c, $(SRCLIST))
-override COBJS     = $(call src2obj, $(CSRCLIST))
-override CDEPS     = $(call src2dep, $(CSRCLIST))
+override COBJECTS  = $(call src2obj, $(CSRCLIST))
+override CDEPENDS  = $(call src2dep, $(CSRCLIST))
 
-# Update global variables
-override OBJECTS  += $(COBJS)
-override DEPENDS  += $(CDEPS)
+ifeq ($(filter clean distclean, $(MAKECMDGOALS)), $(EMPTY))
+    # C preprocessor flags
+    override C_PPFLAGS = $(strip $(CPPFLAGS) \
+                                 $(call mkMacro, $(CPPMACROS)) \
+                                 $(PKGMACROS) \
+                                 $(call mkIncDir, $(CPPINCPATH)) \
+                                 $(PKGINCPATH))
+    # C++ compiler flags
+    override CFLAGS   := $(strip $(CFLAGS))
 
-# Dependency rule
-$(CDEPS): %:
-	@echo "Updating dependency file: $(call dep2src, $@) -> $@"
-	@mkdir -p $(dir $@)
-	@echo $(patsubst %:, \
-			$(call src2obj, $(call dep2src, $@)) $@: $(CONFIGFILE), \
-				$(shell $(CC) -MM $(C_PPFLAGS) $(call dep2src, $@))) > $@
+    # Dependency rule
+    $(CDEPENDS): %:
+		@echo "Updating dependency file: $(call dep2src, $@) -> $@"
+		@mkdir -p $(dir $@)
+		@echo $(patsubst %:, \
+				$(call src2obj, $(call dep2src, $@)) $@: $(CONFIGFILE), \
+					$(shell $(CC) -MM $(C_PPFLAGS) $(call dep2src, $@))) > $@
 
-# Object rule
-$(COBJS): %:
-	@mkdir -p $(dir $@)
-	$(CC) $(strip $(CFLAGS) $(C_PPFLAGS) -c -o $@ $(call obj2src, $@))
+    # Object rule
+    $(COBJECTS): %:
+		@mkdir -p $(dir $@)
+		$(CC) $(strip $(CFLAGS) $(C_PPFLAGS) -c -o $@ $(call obj2src, $@))
+
+    $(TARGET): $(COBJECTS)
+
+    sinclude $(CDEPENDS)
+else
+    # Cleanup rules
+    cclean:
+		@$(RM) -v $(CDEPENDS) $(COBJECTS)
+
+    clean: cclean
+endif
