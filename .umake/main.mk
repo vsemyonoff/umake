@@ -20,8 +20,10 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
+override filterLocal = $(shell for i in $(1); do [ ! -L "$$i" ] && echo "$$i"; done)
+
 # Actions rule
-$(ACTIONS): $(PROJECTS)
+$(ACTIONS): $(patsubst %.prj, %, $(call filterLocal, $(CONFIGSLIST)))
 	@echo "Reached target: $@"
 
 # Make projects rule
