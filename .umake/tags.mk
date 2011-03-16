@@ -21,3 +21,4 @@
 #
 
 # TODO: create vim tags generation rules
+tags:

@@ -21,7 +21,12 @@
 #
 
 override TERMINAL = $(strip $(TERMNAME) $(TERMOPTIONS))
+override EXECARGS = $(filter-out exec, $(MAKECMDGOALS))
 
 .PHONY: exec
 exec: $(TARGET)
-	@exec $(TERMINAL) $(SHELL) -c "$(TARGET) $(filter-out exec, $(MAKECMDGOALS)); echo -e '\nPress any key to close the window' && read"
+	@exec $(TERMINAL) $(SHELL) -c "$(TARGET) $(EXECARGS); echo -e '\nPress any key to close the window' && read"
+
+.PHONY: $(EXECARGS)
+# Fake rule for arguments handlink
+$(EXECARGS):

@@ -161,8 +161,12 @@ else
     sinclude $(addprefix $(MODULESDIR)handlers/, $(addsuffix .mk, $(EXTLIST)))
     ifeq ($(filter clean distclean, $(MAKECMDGOALS)), $(EMPTY))
         include $(MODULESDIR)link.mk
-        include $(MODULESDIR)exec.mk
-        include $(MODULESDIR)tags.mk
+        ifneq ($(filter exec, $(MAKECMDGOALS)), $(EMPTY))
+            include $(MODULESDIR)exec.mk
+        endif
+        ifneq ($(filter tags, $(MAKECMDGOALS)), $(EMPTY))
+            include $(MODULESDIR)tags.mk
+        endif
     else
         include $(MODULESDIR)clean.mk
         include $(MODULESDIR)distclean.mk
