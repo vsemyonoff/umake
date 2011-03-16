@@ -75,8 +75,7 @@ You can declare targets dependency in 'depends.prg' file in makefile format:
     dep_project1 [dep_project2 ...]: main_project
 
 Supported actions:
-  - all      : build all available targets (default for not first run)
-  - config   : create new configuration template (default for first run)
+  - all      : build all available targets
   - exec     : execute target
   - tags     : genetate tags for Vim (TODO)
   - clean
@@ -99,8 +98,8 @@ they are skipped while actions processing:
                 library.prj (symlink to ../library.prj)
                 depends.prg (test1 test2: library)
 
-When 'make clean' called in project/tests cleanup will be performed on
-test1, test2 and NOT on library
+When 'make clean' called in 'project/tests', cleanup will be performed on
+'test1', 'test2' and NOT on 'library'.
 
 Config file variables description:
 SRCDIRLIST  - ALL supported sources from these folders will be

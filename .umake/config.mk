@@ -79,8 +79,8 @@ endef
 
 export CONFIG_TEMPLATE
 
-.PHONY: config
-config:
-	@[ ! -f "$(CONFIGFILE)" ] && \
-		echo "Generating project template: $(CONFIGFILE)" && \
-			echo "$$CONFIG_TEMPLATE" > $(CONFIGFILE)
+$(TPLSLIST): %.prj:
+	@[ ! -f "$@" ] && \
+		echo "Generating project template: $@" && \
+			echo "$$CONFIG_TEMPLATE" > $@
+	@echo "Now edit '$@' and type 'make'..."

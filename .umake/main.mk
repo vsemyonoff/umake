@@ -20,18 +20,15 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-override filterLocal = $(shell for i in $(1); do [ ! -L "$$i" ] && echo "$$i"; done)
+.PHONY: $(PROJECTS) $(ACTIONS)
 
-# Actions rule
-$(ACTIONS): $(patsubst %.prj, %, $(call filterLocal, $(CONFIGSLIST)))
-	@echo "Reached target: $@"
-
-# Make projects rule
+# Projects rule (skip actions for symlinked projects)
 $(CONFIGSLIST:%.prj=%): %: %.prj
 	@cd $(dir $(shell readlink -f $<)) && \
-		$(MAKE) $(ACTIONS) CONFIGFILE=$(notdir $(shell readlink -f $<))
+		$(MAKE) \
+			$(shell [ ! -z "$(call filterLocal, $<)" ] && echo $(ACTIONS)) \
+				CONFIGFILE=$(notdir $(shell readlink -f $<))
 
-# Create project templates rule
-$(TPLSLIST): %.prj:
-	@$(MAKE) config CONFIGFILE=$@
-	@echo "Now edit '$@' and type 'make'..."
+# Actions rule (skip symlinked projects)
+$(ACTIONS): $(patsubst %.prj, %, $(call filterLocal, $(patsubst %, %.prj, $(PROJECTS))))
+	@echo "Reached target: $@"
