@@ -3,6 +3,7 @@ Umake
 
 GNU Make based simple automation build system.
 
+
 Requirements
 ------------
 
@@ -16,54 +17,127 @@ Makefile was tested with:
  - Linux (2.6.37.3)
 
 There was not used any version specific features, so I think it will
-work with older and newer versions of these software.
+work with older or newer versions of these software.
+
 
 Installation
 ------------
 
-Just copy Makefile and 'umake' folder to project's toplevel folder.
+Just copy Makefile and '.umake' folder to project's toplevel folder.
+To use Makefile in project subfolders - just create symlink on it.
+
+    peoject/
+        include/
+        src/
+        .umake/
+        Makefile
+        tests/
+            include/
+            src/
+            test1.prj
+            test2.prj
+            Makefile (symlink to ../Makefile)
+
+Umake will resolve symlink and find path to modules folder.
+
 
 Usage
 -----
 
+project - fs folder with one or more build configuration files
+config  - one target build settings file with '.prj' extension
+target  - config name without '.prj' extension
+action  - operation on target
+
 Main syntax:
-    make [project] [action] [variables]
+    make config1.prj [ config2.prj ...]
+        create config files
 
-Any file with '.prj' extension is treated as configuration (project)
-file. Project name is configuration file name without extension.
-'depends.prg' is project group file which describe dependencies
-between several projects in format (project names without '.prj'):
-    dependent_project1 [dep_pr2 ... n]: main_project
+    make [target1 ... targetN] action1 [ action2 ...]
+        do actions on selected or on all existing targets
+        except external (symlinked)
 
+    make [target1 ... targetN]
+        build selected or all existing targets
+
+First time 'make' will generate target config. Edit config variables
+and type 'make' again to start building target. One config - one target.
+To add target named 'new' to current project type:
+
+    make new.prj
+
+By default all targets from current folder will be processed. You can build
+targets selectively:
+
+    make target1 target3
+
+You can declare targets dependency in 'depends.prg' file in makefile format:
+    dep_project1 [dep_project2 ...]: main_project
 
 Supported actions:
-  - all      : build all available targets
-  - config   : create new configuration template
+  - all      : build all available targets (default for not first run)
+  - config   : create new configuration template (default for first run)
   - exec     : execute target
+  - tags     : genetate tags for Vim (TODO)
   - clean
     distclean: cleanup project
 
-Variables description:
+Exec action support arguments for target execution:
+
+    make [target1 ... ] exec arg1 arg2
+
+This will run selected or all targets with arguments arg1 arg2.
+
+Symlinked targets usually used as a dependency for other targets, so
+they are skipped while actions processing:
+
+    project/
+        library.prj
+            tests/
+                test1.prj
+                test2.prj
+                library.prj (symlink to ../library.prj)
+                depends.prg (test1 test2: library)
+
+When 'make clean' called in project/tests cleanup will be performed on
+test1, test2 and NOT on library
+
+Config file variables description:
 SRCDIRLIST  - ALL supported sources from these folders will be
               compiled.
+
 SRCLIST     - Source files list to be compiled together with ALL
-              files from SOURCEDIRS. If SOURCEDIRS and SOURCES are
-              empty then Umake will try to compile all supported sources
-              from current folder.
+              files from SOURCEDIRS (if specified). If SOURCEDIRS and
+              SOURCES are empty then Umake will try to compile all
+              supported sources from current folder.
+
 BUILDROOT   - Toplevel output folder (default: current folder).
+
 BINDIR      - Where to put target under BUILDROOT? (default: BUILDROOT/).
+
 TARGET      - Target name (default: configuration file's name w/o
               extension).
+
 TERMNAME    - terminal name for exec action.
+
 TERMOPTIONS - terminal arguments.
+
 CPPFLAGS    - C/C++ preprocessor flags.
+
 CPPMACROS   - C/C++ preprocessor macros definitions.
+
 CPPINCPATH  - C/C++ preprocessor include files path.
+
 CFLAGS      - C compiler flags.
+
 CXXFLAGS    - C++ compiler flags.
+
 LDFLAGS     - Linker flags.
+
 LIBRARYPATH - Libraries search path.
+
 LIBRARIES   - Required libraries list.
+
 REQUIREPKGS - Required 'pkg-config' packages list. Format:
               pkgname[:==|<=|>=version], example:
               REQUIREPKGS = libxine:>=1.1.15 xorg-server
@@ -72,7 +146,8 @@ Umake will place intermediate files to:
 BUILDROOT/.obj/PROJECT/    - object files
 BUILDROOT/.dep/PROJECT/    - dependency files
 
+
 Troubleshooting
 ---------------
 
-Any bugs and questions email to: vsemyonoff at gmail_com
+Any bugs and questions email to: [vsemyonoff on gmail dot com]

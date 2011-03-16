@@ -3,7 +3,7 @@
 #
 # MakeIt - GNU Make based automation build system
 #
-# Copyright © 2009 Vladyslav Semyonov <vsemyonoff@gmail.com>
+# Copyright © 2009 Vladyslav Semyonov [vsemyonoff on gmail dot com]
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
