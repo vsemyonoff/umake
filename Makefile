@@ -75,21 +75,12 @@ ifeq ($(CONFIGFILE), $(EMPTY))
     override ACTIONS = $(filter-out all $(PROJECTS) $(TPLSLIST), $(MAKECMDGOALS))
 
     ifeq ($(TPLSLIST), $(EMPTY))
-        # Build projects or execute actions
-        ifeq ($(ACTIONS), $(EMPTY))
-            # Build only
-            all: $(PROJECTS)
-        else
-            # Execute only
-            all: $(ACTIONS)
-        endif
+        all: $(PROJECTS)
         include $(MODULESDIR)main.mk
-        # Do not resolve deps while cleaning
         ifeq ($(filter clean distclean, $(ACTIONS)), $(EMPTY))
             sinclude depends.prg
         endif
     else
-        # Create templates only (ignore any project or action arguments)
         all: $(TPLSLIST)
         include $(MODULESDIR)config.mk
     endif
