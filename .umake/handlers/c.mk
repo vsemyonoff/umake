@@ -26,7 +26,7 @@ override CC = gcc
 # Get current filetype
 override CURREXT := $(notdir $(basename $(lastword $(MAKEFILE_LIST))))
 ifneq ($(CEXT), $(EMPTY))
-    $(error "Mixing extension for the same filetype not allowed: $(CEXT), $(CURREXT)")
+    $(error "Mixing extensions for the same filetype is not allowed: $(CEXT), $(CURREXT)")
 endif
 override CEXT := $(CURREXT)
 

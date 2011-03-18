@@ -26,7 +26,7 @@ override CXX = g++
 # Get current filetype
 override CURREXT := $(notdir $(basename $(lastword $(MAKEFILE_LIST))))
 ifneq ($(CXXEXT), $(EMPTY))
-    $(error "Mixing extension for the same filetype not allowed: $(CXXEXT), $(CURREXT)")
+    $(error "Mixing extensions for the same filetype is not allowed: $(CXXEXT), $(CURREXT)")
 endif
 override CXXEXT := $(CURREXT)
 
