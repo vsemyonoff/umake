@@ -113,7 +113,7 @@ then go to '.umake/handlers' folder and add symlink to corresponding handler:
     cd .umake/handlers && ln -sf cpp.mk cXX.mk
 
 NOTE: mixing extensions for the same filetype in the single target will
-cause build error (for example: c and cc).
+cause build error (for example: cpp and cxx).
 
 Feel free to add new handlers required by your project (do not forget
 to email them to me :)).
