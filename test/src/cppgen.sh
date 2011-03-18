@@ -1,5 +1,5 @@
-for i in $(seq 1 100); do
-cat << EOF > test$i.cpp
+for i in $(seq 101 200); do
+cat << EOF > test$i.cxx
 #include "main.h"
 
 void test$i()
