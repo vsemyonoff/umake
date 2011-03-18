@@ -20,15 +20,18 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
+# C++ compiler
+override CXX = g++
+
 # Get current filetype
-override CURR_EXT := $(notdir $(basename $(lastword $(MAKEFILE_LIST))))
-ifneq ($(CXX_EXT), $(EMPTY))
-    $(error "Mixing extension for the same filetype not allowed: $(CXX_EXT), $(CURR_EXT)")
+override CURREXT := $(notdir $(basename $(lastword $(MAKEFILE_LIST))))
+ifneq ($(CXXEXT), $(EMPTY))
+    $(error "Mixing extension for the same filetype not allowed: $(CXXEXT), $(CURREXT)")
 endif
-override CXX_EXT := $(CURR_EXT)
+override CXXEXT := $(CURREXT)
 
 # Generate src/deps/obj lists
-override CXXSRCLIST  = $(filter %.$(CXX_EXT), $(SRCLIST))
+override CXXSRCLIST  = $(filter %.$(CXXEXT), $(SRCLIST))
 override CXXOBJECTS  = $(call src2obj, $(CXXSRCLIST))
 override CXXDEPENDS  = $(call src2dep, $(CXXSRCLIST))
 

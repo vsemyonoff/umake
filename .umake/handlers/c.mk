@@ -20,16 +20,18 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
+# C compiler
+override CC = gcc
 
 # Get current filetype
-override CURR_EXT := $(notdir $(basename $(lastword $(MAKEFILE_LIST))))
-ifneq ($(C_EXT), $(EMPTY))
-    $(error "Mixing extension for the same filetype not allowed: $(C_EXT), $(CURR_EXT)")
+override CURREXT := $(notdir $(basename $(lastword $(MAKEFILE_LIST))))
+ifneq ($(CEXT), $(EMPTY))
+    $(error "Mixing extension for the same filetype not allowed: $(CEXT), $(CURREXT)")
 endif
-override C_EXT := $(CURR_EXT)
+override CEXT := $(CURREXT)
 
 # Generate src/deps/obj lists
-override CSRCLIST  = $(filter %.$(C_EXT), $(SRCLIST))
+override CSRCLIST  = $(filter %.$(CEXT), $(SRCLIST))
 override COBJECTS  = $(call src2obj, $(CSRCLIST))
 override CDEPENDS  = $(call src2dep, $(CSRCLIST))
 
