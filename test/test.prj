@@ -2,9 +2,9 @@
 # Files settings
 #
 # Source folders list
-SRCDIRLIST   =
+SRCDIRLIST   = src
 # Source files list
-SRCLIST      = src/main.cpp
+SRCLIST      =
 # Toplevel output folder (default: current folder)
 BUILDROOT    = build
 # Where to put target under BUILDROOT? (default: BUILDROOT/)

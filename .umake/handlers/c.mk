@@ -20,8 +20,16 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
+
+# Get current filetype
+override CURR_EXT := $(notdir $(basename $(lastword $(MAKEFILE_LIST))))
+ifneq ($(C_EXT), $(EMPTY))
+    $(error "Mixing extension for the same filetype not allowed: $(C_EXT), $(CURR_EXT)")
+endif
+override C_EXT := $(CURR_EXT)
+
 # Generate src/deps/obj lists
-override CSRCLIST  = $(filter %.c, $(SRCLIST))
+override CSRCLIST  = $(filter %.$(C_EXT), $(SRCLIST))
 override COBJECTS  = $(call src2obj, $(CSRCLIST))
 override CDEPENDS  = $(call src2dep, $(CSRCLIST))
 
