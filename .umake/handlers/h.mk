@@ -25,56 +25,45 @@ override CXX = g++
 
 # Get current filetype
 override CURREXT := $(notdir $(basename $(lastword $(MAKEFILE_LIST))))
-ifneq ($(CXXEXT), $(EMPTY))
-    $(error "Mixing extensions for the same filetype is not allowed: $(CXXEXT), $(CURREXT)")
+ifneq ($(HEXT), $(EMPTY))
+    $(error "Mixing extensions for the same filetype is not allowed: $(HEXT), $(CURREXT)")
 endif
-override CXXEXT := $(CURREXT)
+override HEXT := $(CURREXT)
 
 # Generate src/deps/obj lists
-override CXXSRCLIST  = $(filter %.$(CXXEXT), $(SRCLIST))
-override CXXOBJECTS  = $(call src2obj, $(CXXSRCLIST))
-override CXXDEPENDS  = $(call src2dep, $(CXXSRCLIST))
-override CXXTAGS     = $(call src2tag, $(CXXSRCLIST))
+override HSRCLIST  = $(filter %.$(HEXT), $(SRCLIST))
+override HDEPENDS  = $(call src2dep, $(HSRCLIST))
+override HTAGS     = $(call src2tag, $(HSRCLIST))
 
 ifeq ($(filter clean distclean, $(MAKECMDGOALS)), $(EMPTY))
-    # C++ preprocessor flags
-    override CXX_PPFLAGS = $(strip $(CPPFLAGS) \
-                                   $(call mkMacro, $(CPPMACROS)) \
-                                   $(PKGMACROS) \
-                                   $(call mkIncDir, $(SRCDIRLIST)) \
-                                   $(call mkIncDir, $(CPPINCPATH)) \
-                                   $(PKGINCPATH))
-    # C++ compiler flags
-    override CXXFLAGS   := $(strip $(CXXFLAGS))
+    ifeq ($(CXX_PPFLAGS), $(EMPTY))
+        # C++ preprocessor flags
+        override CXX_PPFLAGS = $(strip $(CPPFLAGS) \
+                                       $(call mkMacro, $(CPPMACROS)) \
+                                       $(PKGMACROS) \
+                                       $(call mkIncDir, $(SRCDIRLIST)) \
+                                       $(call mkIncDir, $(CPPINCPATH)) \
+                                       $(PKGINCPATH))
+    endif
 
     # Dependency rule
-    $(CXXDEPENDS): %:
+    $(HDEPENDS): %:
 		@echo "Updating dependency file: $(call dep2src, $@) -> $@"
 		@mkdir -p $(dir $@)
-		@echo $(patsubst %:, \
-					$(call src2obj, $(call dep2src, $@)) $@: $(CONFIGFILE), \
-						$(shell $(CXX) -M $(CXX_PPFLAGS) $(call dep2src, $@))) > $@
+		@echo $(shell $(CXX) -M $(CXX_PPFLAGS) $(call dep2src, $@)) > $@
 
     # Tags rule
-    $(CXXTAGS): %: $(call src2dep, $(SOURCEFILE))
+    $(HTAGS): %: $(call src2dep, $(SOURCEFILE))
 		@echo "Generating tags file: $(SOURCEFILE) -> $@"
 		@mkdir -p $(dir $@)
 		@ctags --sort=yes --c++-kinds=+p --fields=+iaS --extra=+q --language-force=C++ -o $@ \
-			$(shell grep -oP "(?<=$(CONFIGFILE)\s).*(?=$$)" $<)
+			$(shell grep -oP "(?<=:\s).*(?=$$)" $<)
 
-    # Object rule
-    $(CXXOBJECTS): %:
-		@mkdir -p $(dir $@)
-		$(strip $(CXX) $(CXXFLAGS) $(CXX_PPFLAGS) -c -o $@ $(call obj2src, $@))
-
-    $(TARGET): $(CXXOBJECTS)
-
-    sinclude $(CXXDEPENDS)
 else
     # Cleanup rules
-    .PHONY: cxxclean
-    cxxclean:
-		@$(RM) -v $(CXXDEPENDS) $(CXXTAGS) $(CXXOBJECTS)
+    .PHONY: hclean
+    hclean:
+		@$(RM) -v $(HDEPENDS) $(HTAGS)
 
-    clean: cxxclean
+    clean: hclean
 endif
