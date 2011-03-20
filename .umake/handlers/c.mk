@@ -49,18 +49,19 @@ ifeq ($(filter clean distclean, $(MAKECMDGOALS)), $(EMPTY))
 
     # Dependency rule
     $(CDEPENDS): %:
-		@echo "Updating dependency file: $(call dep2src, $@) -> $@"
-		@mkdir -p $(dir $@)
-		@echo $(patsubst %:, \
-				$(call src2obj, $(call dep2src, $@)) $@: $(CONFIGFILE), \
-					$(shell $(CC) -M $(C_PPFLAGS) $(call dep2src, $@))) > $@
+		@echo "Updating dependency file: $(call dep2src, $@) -> $@"; \
+		 mkdir -p $(dir $@); \
+		 echo $(patsubst %:, \
+			$(call src2obj, $(call dep2src, $@)) $@: $(CONFIGFILE), \
+				$(shell $(CC) -M $(C_PPFLAGS) $(call dep2src, $@))) > $@
 
     # Tags rule
     $(CTAGS): %: $(call src2dep, $(SOURCEFILE))
-		@echo "Generating tags file: $(SOURCEFILE) -> $@"
-		@mkdir -p $(dir $@)
-		@ctags --sort=yes --c-kinds=+p --fields=+iaS --extra=+q --language-force=C -o $@ \
-			$(shell grep -oP "(?<=$(CONFIGFILE)\s).*(?=$$)" $<)
+		@echo "Generating tags file: $(SOURCEFILE) -> $@"; \
+		 mkdir -p $(dir $@); \
+		 ctags --sort=yes --c-kinds=+p --fields=+iaS --extra=+q \
+			--language-force=C -o $@ \
+				$(shell grep -oP "(?<=$(CONFIGFILE)\s).*(?=$$)" $<)
 
     # Object rule
     $(COBJECTS): %:
@@ -74,7 +75,7 @@ else
     # Cleanup rules
     .PHONY: cclean
     cclean:
-		@$(RM) -v $(CDEPENDS) $(CTAGS) $(COBJECTS)
+		@$(RM) -v $(CTAGS) $(CDEPENDS) $(COBJECTS)
 
     clean: cclean
 endif

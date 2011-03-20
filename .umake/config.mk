@@ -82,5 +82,5 @@ export CONFIG_TEMPLATE
 $(TPLSLIST): %.prj:
 	@[ ! -f "$@" ] && \
 		echo "Generating project template: $@" && \
-			echo "$$CONFIG_TEMPLATE" > $@
-	@echo "Now edit '$@' and type 'make'..."
+			echo "$$CONFIG_TEMPLATE" > $@; \
+	echo "Now edit '$@' and type 'make'..."

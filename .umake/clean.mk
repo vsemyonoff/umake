@@ -20,19 +20,35 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
+define CLEANDIR_SH
+#!/usr/bin/env bash
+
+[ $${#} != 1 ] && exit 0
+
+cleandir() {
+    [ ! -d "$$1" ] && return
+    [ ! -z "$$(find "$$1" -type f)" ] && return
+    $(RM) -rv "$$1"
+    PARENT=$$(dirname "$$1")
+    [ "$$PARENT" == "." ] || [ "$$PARENT" == "/" ] && return
+    cleandir "$$PARENT"
+}
+
+cleandir $$1
+endef
+export CLEANDIR_SH
+
+# Cleanup script
+override CLEANDIR = $(TMPDIR)cleandir.sh
+
+$(CLEANDIR):
+	@umask u=rwx,g=,o=; \
+	 mkdir -p $$(dirname $@); \
+	 echo "$$CLEANDIR_SH" > $@; \
+	 chmod a+x $@
+
 .PHONY: clean
-clean:
-	@_cleandir() { \
-		if [ -d "$$1" ]; then \
-			if [ "`find "$$1" -type f`" ==  "" ]; then \
-				$(RM) -rv "$$1"; \
-				PARENT=`dirname "$$1"`; \
-				if [ ! "$$PARENT" == "." ] || [ ! "$$PARENT" == "/" ]; then \
-					_cleandir "$$PARENT"; \
-				fi \
-			fi \
-		fi \
-	}; \
-	_cleandir $(DEPDIR); \
-	_cleandir $(TAGDIR); \
-	_cleandir $(OBJDIR);
+clean: $(CLEANDIR)
+	@$(CLEANDIR) $(TAGDIR); \
+	 $(CLEANDIR) $(DEPDIR); \
+	 $(CLEANDIR) $(OBJDIR)

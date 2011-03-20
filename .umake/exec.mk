@@ -21,11 +21,13 @@
 #
 
 override TERMINAL = $(strip $(TERMNAME) $(TERMOPTIONS))
-override EXECARGS = $(filter-out exec, $(MAKECMDGOALS))
+override EXECARGS = $(filter-out exec tags clean distclean, $(MAKECMDGOALS))
 
 .PHONY: exec
 exec: $(TARGET)
-	@exec $(TERMINAL) $(SHELL) -c "LD_LIBRARY_PATH='$(LIBRARYPATH)' $(TARGET) $(EXECARGS); echo -e '\nPress any key to close the window' && read"
+	@exec $(TERMINAL) $(SHELL) -c \
+		"LD_LIBRARY_PATH='$(LIBRARYPATH)' $(TARGET) $(EXECARGS); \
+			echo -e '\nPress any key to close the window' && read"
 
 # Arguments handling empty rule
 .PHONY: $(EXECARGS)

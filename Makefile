@@ -105,23 +105,27 @@ else
 #
 # Validate common variables
 #
-    ifneq ($(filter /%, $(BUILDROOT) $(BINDIR) $(SRCDIRLIST) $(SRCLIST)), $(EMPTY))
-        $(error "Absolute file names are not supported, use relative file names")
+    ifneq ($(filter /%, $(BINDIR) $(SRCDIRLIST) $(SRCLIST)), $(EMPTY))
+        $(error "Absolute pathes (/*) are not allowed, use relative file names")
+    endif
+    ifneq ($(filter ../%, $(BINDIR) $(SRCDIRLIST) $(SRCLIST)), $(EMPTY))
+        $(error "External pathes (../*) are not allowed, use symlinks to include external files")
     endif
 
     # Check output folders
     override BUILDROOT := $(call trailSlash, $(firstword $(BUILDROOT)))
+    override BINDIR := $(call trailSlash, $(BUILDROOT)$(firstword $(BINDIR)))
     override DEPDIR  = $(call trailSlash, $(BUILDROOT).dep/$(PROJECT))
     override TAGDIR  = $(call trailSlash, $(BUILDROOT).tag/$(PROJECT))
     override OBJDIR  = $(call trailSlash, $(BUILDROOT).obj/$(PROJECT))
-    override BINDIR := $(call trailSlash, $(BUILDROOT)$(firstword $(BINDIR)))
+    override TMPDIR  = $(call trailSlash, /tmp/umake-$(USER))
 
     # Check source dirs list and sources list
     override SRCDIRLIST := $(strip $(SRCDIRLIST))
     override SRCLIST := $(sort $(SRCLIST))
 
     # Check target name
-    override TARGET := $(firstword $(TARGET))
+    override TARGET := $(notdir $(firstword $(TARGET)))
     ifeq ($(TARGET), $(EMPTY))
         override TARGET = $(PROJECT)
     endif

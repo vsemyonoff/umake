@@ -49,18 +49,19 @@ ifeq ($(filter clean distclean, $(MAKECMDGOALS)), $(EMPTY))
 
     # Dependency rule
     $(CXXDEPENDS): %:
-		@echo "Updating dependency file: $(call dep2src, $@) -> $@"
-		@mkdir -p $(dir $@)
-		@echo $(patsubst %:, \
-					$(call src2obj, $(call dep2src, $@)) $@: $(CONFIGFILE), \
-						$(shell $(CXX) -M $(CXX_PPFLAGS) $(call dep2src, $@))) > $@
+		@echo "Updating dependency file: $(call dep2src, $@) -> $@"; \
+		 mkdir -p $(dir $@); \
+		 echo $(patsubst %:, \
+			$(call src2obj, $(call dep2src, $@)) $@: $(CONFIGFILE), \
+				$(shell $(CXX) -M $(CXX_PPFLAGS) $(call dep2src, $@))) > $@
 
     # Tags rule
     $(CXXTAGS): %: $(call src2dep, $(SOURCEFILE))
-		@echo "Generating tags file: $(SOURCEFILE) -> $@"
-		@mkdir -p $(dir $@)
-		@ctags --sort=yes --c++-kinds=+p --fields=+iaS --extra=+q --language-force=C++ -o $@ \
-			$(shell grep -oP "(?<=$(CONFIGFILE)\s).*(?=$$)" $<)
+		@echo "Generating tags file: $(SOURCEFILE) -> $@"; \
+		 mkdir -p $(dir $@); \
+		 ctags --sort=yes --c++-kinds=+p --fields=+iaS --extra=+q \
+			--language-force=C++ -o $@ \
+				$$($(GCCMOD) $(CONFIGFILE) $< $(TMPDIR))
 
     # Object rule
     $(CXXOBJECTS): %:
@@ -74,7 +75,7 @@ else
     # Cleanup rules
     .PHONY: cxxclean
     cxxclean:
-		@$(RM) -v $(CXXDEPENDS) $(CXXTAGS) $(CXXOBJECTS)
+		@$(RM) -rv $(CXXTAGS) $(CXXDEPENDS) $(CXXOBJECTS)
 
     clean: cxxclean
 endif

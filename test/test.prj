@@ -16,7 +16,7 @@ TARGET       = $(PROJECT)
 #
 # Terminal settings
 #
-TERMNAME     = urxvt
+TERMNAME     = urxvtc
 TERMOPTIONS  = -e
 
 #########################################################################
