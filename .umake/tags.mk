@@ -25,4 +25,4 @@ ifeq ($(SOURCEFILE), $(EMPTY))
 endif
 
 .PHONY: tags
-tags: $(call src2tag, $(SOURCEFILE))
+tags: $(call src2tag, $(filter $(SOURCEFILE), $(SRCLIST)))
