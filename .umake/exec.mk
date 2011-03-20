@@ -27,6 +27,6 @@ override EXECARGS = $(filter-out exec, $(MAKECMDGOALS))
 exec: $(TARGET)
 	@exec $(TERMINAL) $(SHELL) -c "$(TARGET) $(EXECARGS); echo -e '\nPress any key to close the window' && read"
 
+# Arguments handling empty rule
 .PHONY: $(EXECARGS)
-# Fake rule for arguments handlink
 $(EXECARGS):

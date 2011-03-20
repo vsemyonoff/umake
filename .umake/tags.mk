@@ -20,5 +20,9 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-# TODO: create vim tags generation rules
-tags:
+ifeq ($(SOURCEFILE), $(EMPTY))
+    $(error "SOURCEFILE not specified, unable to generate tags file")
+endif
+
+.PHONY: tags
+tags: $(call src2tag, $(SOURCEFILE))

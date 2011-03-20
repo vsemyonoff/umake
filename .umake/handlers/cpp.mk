@@ -56,13 +56,14 @@ ifeq ($(filter clean distclean, $(MAKECMDGOALS)), $(EMPTY))
     # Object rule
     $(CXXOBJECTS): %:
 		@mkdir -p $(dir $@)
-		$(CXX) $(strip $(CXXFLAGS) $(CXX_PPFLAGS) -c -o $@ $(call obj2src, $@))
+		$(strip $(CXX) $(CXXFLAGS) $(CXX_PPFLAGS) -c -o $@ $(call obj2src, $@))
 
     $(TARGET): $(CXXOBJECTS)
 
     sinclude $(CXXDEPENDS)
 else
     # Cleanup rules
+    .PHONY: cxxclean
     cxxclean:
 		@$(RM) -v $(CXXDEPENDS) $(CXXOBJECTS)
 

@@ -34,6 +34,7 @@ override CEXT := $(CURREXT)
 override CSRCLIST  = $(filter %.$(CEXT), $(SRCLIST))
 override COBJECTS  = $(call src2obj, $(CSRCLIST))
 override CDEPENDS  = $(call src2dep, $(CSRCLIST))
+override CTAGS     = $(call src2tag, $(CSRCLIST))
 
 ifeq ($(filter clean distclean, $(MAKECMDGOALS)), $(EMPTY))
     # C preprocessor flags
@@ -42,7 +43,7 @@ ifeq ($(filter clean distclean, $(MAKECMDGOALS)), $(EMPTY))
                                  $(PKGMACROS) \
                                  $(call mkIncDir, $(CPPINCPATH)) \
                                  $(PKGINCPATH))
-    # C++ compiler flags
+    # C compiler flags
     override CFLAGS   := $(strip $(CFLAGS))
 
     # Dependency rule
@@ -51,20 +52,28 @@ ifeq ($(filter clean distclean, $(MAKECMDGOALS)), $(EMPTY))
 		@mkdir -p $(dir $@)
 		@echo $(patsubst %:, \
 				$(call src2obj, $(call dep2src, $@)) $@: $(CONFIGFILE), \
-					$(shell $(CC) -MM $(C_PPFLAGS) $(call dep2src, $@))) > $@
+					$(shell $(CC) -M $(C_PPFLAGS) $(call dep2src, $@))) > $@
+
+    # Tags rule
+    $(CTAGS): %: $(call src2dep, $(SOURCEFILE))
+		@echo "Generating tags file: $(SOURCEFILE) -> $@"
+		@mkdir -p $(dir $@)
+		@ctags --sort=yes --c-kinds=+p --fields=+iaS --extra=+q --language-force=C -o $@ \
+			$(shell grep -oP "(?<=$(CONFIGFILE)\s).*(?=$$)" $<)
 
     # Object rule
     $(COBJECTS): %:
 		@mkdir -p $(dir $@)
-		$(CC) $(strip $(CFLAGS) $(C_PPFLAGS) -c -o $@ $(call obj2src, $@))
+		$(strip $(CC) $(CFLAGS) $(C_PPFLAGS) -c -o $@ $(call obj2src, $@))
 
     $(TARGET): $(COBJECTS)
 
     sinclude $(CDEPENDS)
 else
     # Cleanup rules
+    .PHONY: cclean
     cclean:
-		@$(RM) -v $(CDEPENDS) $(COBJECTS)
+		@$(RM) -v $(CDEPENDS) $(CTAGS) $(COBJECTS)
 
     clean: cclean
 endif
