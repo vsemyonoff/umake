@@ -117,7 +117,7 @@ else
     override BINDIR := $(call trailSlash, $(BUILDROOT)$(firstword $(BINDIR)))
 
     # Check source dirs list and sources list
-    override SRCDIRLIST := $(sort $(SRCDIRLIST))
+    override SRCDIRLIST := $(strip $(SRCDIRLIST))
     override SRCLIST := $(sort $(SRCLIST))
 
     # Check target name

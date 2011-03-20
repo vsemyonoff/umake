@@ -41,6 +41,7 @@ ifeq ($(filter clean distclean, $(MAKECMDGOALS)), $(EMPTY))
     override C_PPFLAGS = $(strip $(CPPFLAGS) \
                                  $(call mkMacro, $(CPPMACROS)) \
                                  $(PKGMACROS) \
+                                 $(call mkIncDir, $(SRCDIRLIST)) \
                                  $(call mkIncDir, $(CPPINCPATH)) \
                                  $(PKGINCPATH))
     # C compiler flags
