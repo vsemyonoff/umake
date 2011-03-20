@@ -64,7 +64,7 @@ $(GCCMOD):
 	@umask u=rwx,g=,o=; \
 	 mkdir -p $$(dirname $@); \
 	 echo "$$GCCMOD_SH" > $@; \
-	 chmod a+x $@
+	 chmod u+x $@
 
 .PHONY: tags
 tags: $(GCCMOD) $(call src2tag, $(filter $(SOURCEFILE), $(SRCLIST)))

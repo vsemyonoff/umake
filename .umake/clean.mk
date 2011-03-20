@@ -45,7 +45,7 @@ $(CLEANDIR):
 	@umask u=rwx,g=,o=; \
 	 mkdir -p $$(dirname $@); \
 	 echo "$$CLEANDIR_SH" > $@; \
-	 chmod a+x $@
+	 chmod u+x $@
 
 .PHONY: clean
 clean: $(CLEANDIR)
