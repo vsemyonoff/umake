@@ -20,9 +20,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-# C compiler
-override CC = gcc
-
 # Get current filetype
 override CURREXT := $(notdir $(basename $(lastword $(MAKEFILE_LIST))))
 ifneq ($(CEXT), $(EMPTY))
