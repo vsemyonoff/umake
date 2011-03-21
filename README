@@ -55,11 +55,11 @@ Main syntax:
     make config1.prj [ config2.prj ...]
         create config files
 
-    make [target1 ... targetN] action1 [ action2 ...]
+    make [target1 ...] action1 [ action2 ...]
         do actions on selected or on all existing targets
         except external (symlinked)
 
-    make [target1 ... targetN]
+    make [target1 ...]
         build selected or all existing targets
 
 Usage description:
@@ -80,7 +80,7 @@ You can declare targets dependency in 'depends.prg' file in makefile format:
 Supported actions:
   - all      : build all available targets
   - exec     : execute target
-  - tags     : genetate tags for Vim (TODO)
+  - tags     : genetate tags for Vim
   - clean
     distclean: cleanup project
 
@@ -89,6 +89,16 @@ Exec action support arguments for target execution:
     make [target1 ... ] exec arg1 arg2
 
 This will run selected or all targets with arguments arg1 arg2.
+
+Tags action (TODO: create vim plugin):
+
+    make tags SOURCEFILE="src/main.cpp"
+
+will build tags file for 'src/main.cpp'.
+
+NOTE: all GCC STL includes with _GLIBCXX_BEGIN_ or _GLIBCXX_END_
+macro will be copied to temporary folder (default: /tmp/umake-${USER})
+and fixed to parse correctly with 'ctags'.
 
 Symlinked targets usually used as a dependency for other targets, so
 they are skipped while actions processing:
@@ -106,9 +116,10 @@ When 'make clean' called in 'project/tests', cleanup will be performed on
 
 Handlers description:
 Umake support automatic filetype detection by file extension. Each supported
-filetype processed via own handler. Currently cupported: C, CPP, c++, c, cc,
-cp, cpp, cxx. If you are using custom name (for example cXX for c++ sources),
-then go to '.umake/handlers' folder and add symlink to corresponding handler:
+filetype processed via own handler. Currently cupported: C, CPP, H, HPP, c++,
+c, cc, cp, cpp, cxx, h, hh, hp, hpp, hxx, tcc. If you are using custom name
+(for example cXX for c++ sources), then go to '.umake/handlers' folder and
+add symlink to corresponding handler or create own:
 
     cd .umake/handlers && ln -sf cpp.mk cXX.mk
 
@@ -158,9 +169,14 @@ REQUIREPKGS - Required 'pkg-config' packages list. Format:
               pkgname[:==|<=|>=version], example:
               REQUIREPKGS = libxine:>=1.1.15 xorg-server
 
+NOTE: names can not start with "/" or "../" for SRCDIRLIST, SRCLIST,
+BINDIR and TARGET variabled. Use symlinks to add external (out of project
+folder) files.
+
 Umake will place intermediate files to:
 BUILDROOT/.obj/PROJECT/    - object files
 BUILDROOT/.dep/PROJECT/    - dependency files
+BUILDROOT/.tag/PROJECT/    - vim tags
 
 
 Troubleshooting
