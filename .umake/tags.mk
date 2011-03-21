@@ -20,6 +20,10 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
+ifeq ($(shell which ctags 2> /dev/null), $(EMPTY))
+    $(error "No 'ctags' tool found")
+endif
+
 ifeq ($(SOURCEFILE), $(EMPTY))
     $(error "SOURCEFILE not specified, unable to generate tags file")
 endif
