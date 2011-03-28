@@ -28,12 +28,12 @@ else
 endif
 
 # LDFLAGS
-override LDFLAGS  := $(strip $(LDFLAGS) $(PKGLDFLAGS) \
-                             $(call mkLibDir, $(LIBRARYPATH)) \
+override LDFLAGS  := $(strip $(LDFLAGS) $(PKGLDFLAGS))
+override LIBS      = $(strip $(call mkLibDir, $(LIBRARYPATH)) \
                              $(PKGLIBPATH) \
                              $(call mkLib, $(LIBRARIES)) \
                              $(PKGLIBS))
 
 $(TARGET):
 	@if [ "$(BINDIR)" != "" ]; then  mkdir -p "$(BINDIR)"; fi
-	$(strip $(LINKER) -o $@ $^ $(LDFLAGS))
+	$(strip $(LINKER) $(LDFLAGS) $(LDPRELIBS) -o $@ $^ $(LIBS) $(LDPOSTLIBS))

@@ -25,7 +25,7 @@ define CONFIG_TEMPLATE
 # Files settings
 #
 # Source folders list
-SRCDIRLIST   = src
+SRCDIRLIST   = src include
 # Source files list
 SRCLIST      =
 # Toplevel output folder (default: current folder)
@@ -51,7 +51,7 @@ CPPFLAGS     =
 # C/C++ preprocessor macros definitions
 CPPMACROS    =
 # C/C++ preprocessor include files path
-CPPINCPATH   = include
+CPPINCPATH   =
 
 #########################################################################
 #
@@ -72,6 +72,10 @@ LDFLAGS      =
 LIBRARYPATH  =
 # Required libraries list
 LIBRARIES    =
+# Raw object files lists to be linked before and after target object
+# files (used with -nostdlib), usually empty
+LDPRELIBS    =
+LDPOSTLIBS   =
 
 # Required 'pkg-config' packages list. Format: pkgname[:==|<=|>=version]
 REQUIREPKGS  =
@@ -81,6 +85,6 @@ export CONFIG_TEMPLATE
 
 $(TPLSLIST): %.prj:
 	@[ ! -f "$@" ] && \
-		echo "Generating project template: $@" && \
+		echo "Generating target template: $@" && \
 			echo "$$CONFIG_TEMPLATE" > $@; \
 	echo "Now edit '$@' and type 'make'..."
