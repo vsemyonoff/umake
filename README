@@ -80,7 +80,6 @@ You can declare targets dependency in 'depends.prg' file in makefile format:
 Supported actions:
   - all      : build all available targets
   - exec     : execute target
-  - tags     : genetate tags for Vim
   - clean
     distclean: cleanup project
 
@@ -89,16 +88,6 @@ Exec action support arguments for target execution:
     make [target1 ... ] exec arg1 arg2
 
 This will run selected or all targets with arguments arg1 arg2.
-
-Tags action (TODO: create vim plugin):
-
-    make tags SOURCEFILE="src/main.cpp"
-
-will build tags file for 'src/main.cpp'.
-
-NOTE: all GCC STL includes with _GLIBCXX_BEGIN_ or _GLIBCXX_END_
-macro will be copied to temporary folder (default: /tmp/umake-${USER})
-and fixed to parse correctly with 'ctags'.
 
 Symlinked targets usually used as a dependency for other targets, so
 they are skipped while actions processing:
@@ -169,14 +158,13 @@ REQUIREPKGS - Required 'pkg-config' packages list. Format:
               pkgname[:==|<=|>=version], example:
               REQUIREPKGS = libxine:>=1.1.15 xorg-server
 
-NOTE: names can not start with "/" or "../" for SRCDIRLIST, SRCLIST,
-BINDIR and TARGET variabled. Use symlinks to add external (out of project
-folder) files.
+NOTE: absolute file names are not allowed for SRCDIRLIST, SRCLIST, BINDIR
+and TARGET variabled. Use symlinks or relative path names to add external
+(out of project folder) resources.
 
 Umake will place intermediate files to:
 BUILDROOT/.obj/PROJECT/    - object files
 BUILDROOT/.dep/PROJECT/    - dependency files
-BUILDROOT/.tag/PROJECT/    - vim tags
 
 
 Troubleshooting
