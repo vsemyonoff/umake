@@ -23,4 +23,15 @@
 .PHONY: distclean
 distclean: clean
 	@$(RM) -v $(TARGET); \
-	 $(CLEANDIR) $(BINDIR)
+	_cleandir() { \
+		if [ -d "$$1" ]; then \
+			if [ "`find "$$1" -type f`" ==  "" ]; then \
+				$(RM) -rv "$$1"; \
+				PARENT=`dirname "$$1"`; \
+				if [ ! "$$PARENT" == "." ] || [ ! "$$PARENT" == "/" ]; then \
+					_cleandir "$$PARENT"; \
+				fi \
+			fi \
+		fi \
+	}; \
+	_cleandir $(BINDIR)

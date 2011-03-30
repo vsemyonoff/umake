@@ -36,11 +36,9 @@ override trailSlash  = $(strip $(filter %/, $(1)) $(addsuffix /, $(filter-out %/
 override rmSlash     = $(strip $(patsubst ./%, %, $(1)))
 # Source file name -> intermediate file name conversion functions
 override src2dep     = $(addprefix $(DEPDIR), $(addsuffix .d, $(1)))
-override src2tag     = $(addprefix $(TAGDIR), $(addsuffix .t, $(1)))
 override src2obj     = $(addprefix $(OBJDIR), $(addsuffix .o, $(1)))
 # Intermediate file name -> source file name conversion functions
 override dep2src     = $(strip $(patsubst $(DEPDIR)%.d, %, $(1)))
-override tag2src     = $(strip $(patsubst $(TAGDIR)%.t, %, $(1)))
 override obj2src     = $(strip $(patsubst $(OBJDIR)%.o, %, $(1)))
 # Preprocessor and linker arguments functions
 override mkMacro     = $(strip $(filter -D%, $(1)) $(addprefix -D, $(filter-out -D%, $(1))))
@@ -83,7 +81,7 @@ ifeq ($(CONFIGFILE), $(EMPTY))
     ifeq ($(TPLSLIST), $(EMPTY))
         all: $(PROJECTS)
         include $(MODULESDIR)main.mk
-        ifeq ($(filter tags clean distclean, $(ACTIONS)), $(EMPTY))
+        ifeq ($(filter clean distclean, $(ACTIONS)), $(EMPTY))
             sinclude depends.prg
         endif
     else
@@ -108,17 +106,12 @@ else
     ifneq ($(filter /%, $(BINDIR) $(SRCDIRLIST) $(SRCLIST)), $(EMPTY))
         $(error "Absolute pathes (/*) are not allowed, use relative file names")
     endif
-    ifneq ($(filter ../%, $(BINDIR) $(SRCDIRLIST) $(SRCLIST)), $(EMPTY))
-        $(error "External pathes (../*) are not allowed, use symlinks to include external files")
-    endif
 
     # Check output folders
     override BUILDROOT := $(call trailSlash, $(firstword $(BUILDROOT)))
     override BINDIR := $(call trailSlash, $(BUILDROOT)$(firstword $(BINDIR)))
     override DEPDIR  = $(call trailSlash, $(BUILDROOT).dep/$(PROJECT))
-    override TAGDIR  = $(call trailSlash, $(BUILDROOT).tag/$(PROJECT))
     override OBJDIR  = $(call trailSlash, $(BUILDROOT).obj/$(PROJECT))
-    override TMPDIR  = $(call trailSlash, /tmp/umake-$(USER))
 
     # Check source dirs list and sources list
     override SRCDIRLIST := $(strip $(SRCDIRLIST))
@@ -146,7 +139,7 @@ else
     # Generate sources list
     override SRCLIST += $(foreach SRCDIR, $(SRCDIRLIST), \
                             $(call rmSlash, \
-                                $(shell find $(SRCDIR) -type f -print)))
+                                $(shell find $(SRCDIR) -type f -print 2>/dev/null)))
     override SRCLIST := $(sort $(SRCLIST))
     ifeq ($(SRCLIST), $(EMPTY))
         $(error "No source files found. Please, update configuration file '$(CONFIGFILE)'")
@@ -166,9 +159,6 @@ else
     else
         include $(MODULESDIR)clean.mk
         include $(MODULESDIR)distclean.mk
-    endif
-    ifneq ($(filter tags, $(MAKECMDGOALS)), $(EMPTY))
-        include $(MODULESDIR)tags.mk
     endif
     ifneq ($(filter exec, $(MAKECMDGOALS)), $(EMPTY))
         include $(MODULESDIR)exec.mk

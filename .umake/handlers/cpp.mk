@@ -31,7 +31,6 @@ override CXXEXT := $(CURREXT)
 override CXXSRCLIST  = $(filter %.$(CXXEXT), $(SRCLIST))
 override CXXOBJECTS  = $(call src2obj, $(CXXSRCLIST))
 override CXXDEPENDS  = $(call src2dep, $(CXXSRCLIST))
-override CXXTAGS     = $(call src2tag, $(CXXSRCLIST))
 
 ifeq ($(filter clean distclean, $(MAKECMDGOALS)), $(EMPTY))
     # C++ preprocessor flags
@@ -50,15 +49,7 @@ ifeq ($(filter clean distclean, $(MAKECMDGOALS)), $(EMPTY))
 		 mkdir -p $(dir $@); \
 		 echo $(patsubst %:, \
 			$(call src2obj, $(call dep2src, $@)) $@: $(CONFIGFILE), \
-				$(shell $(CXX) -M $(CXX_PPFLAGS) $(call dep2src, $@))) > $@
-
-    # Tags rule
-    $(CXXTAGS): %: $(call src2dep, $(SOURCEFILE))
-		@echo "Generating tags file: $(SOURCEFILE) -> $@"; \
-		 mkdir -p $(dir $@); \
-		 ctags --sort=yes --c++-kinds=+p --fields=+iaS --extra=+q \
-			--language-force=C++ -o $@ \
-				$$($(GCCMOD) $(CONFIGFILE) $< $(TMPDIR))
+				$(shell $(CXX) -MM $(CXX_PPFLAGS) $(call dep2src, $@))) > $@
 
     # Object rule
     $(CXXOBJECTS): %:
@@ -72,7 +63,7 @@ else
     # Cleanup rules
     .PHONY: cxxclean
     cxxclean:
-		@$(RM) -rv $(CXXTAGS) $(CXXDEPENDS) $(CXXOBJECTS)
+		@$(RM) -rv $(CXXOBJECTS) $(CXXDEPENDS)
 
     clean: cxxclean
 endif
