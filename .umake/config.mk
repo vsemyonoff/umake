@@ -25,7 +25,7 @@ define CONFIG_TEMPLATE
 # Files settings
 #
 # Source folders list
-SRCDIRLIST   = src include
+SRCDIRLIST   = src
 # Source files list
 SRCLIST      =
 # Toplevel output folder (default: current folder)
@@ -51,7 +51,7 @@ CPPFLAGS     =
 # C/C++ preprocessor macros definitions
 CPPMACROS    =
 # C/C++ preprocessor include files path
-CPPINCPATH   =
+CPPINCPATH   = include
 
 #########################################################################
 #
