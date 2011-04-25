@@ -110,8 +110,8 @@ else
     # Check output folders
     override BUILDROOT := $(call trailSlash, $(firstword $(BUILDROOT)))
     override BINDIR := $(call trailSlash, $(BUILDROOT)$(firstword $(BINDIR)))
-    override DEPDIR  = $(call trailSlash, $(BUILDROOT).dep/$(PROJECT))
-    override OBJDIR  = $(call trailSlash, $(BUILDROOT).obj/$(PROJECT))
+    override DEPDIR  = $(call trailSlash, $(BUILDROOT).dep/$(notdir $(TARGET)))
+    override OBJDIR  = $(call trailSlash, $(BUILDROOT).obj/$(notdir $(TARGET)))
 
     # Check source dirs list and sources list
     override SRCDIRLIST := $(strip $(SRCDIRLIST))
