@@ -20,20 +20,29 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
+# Static library extension
+override AREXT = .a
+
 # Select linker and linker flags
-ifeq ($(CXXSRCLIST), $(EMPTY))
-    override LINKER = $(strip $(CC) $(CFLAGS))
+ifeq ($(suffix $(TARGET)), $(AREXT))
+    $(TARGET):
+		@if [ "$(BINDIR)" != "" ]; then  mkdir -p "$(BINDIR)"; fi
+		$(strip $(AR) $(ARFLAGS) $@ $^)
 else
-    override LINKER = $(strip $(CXX) $(CXXFLAGS))
+    ifeq ($(CXXSRCLIST), $(EMPTY))
+        override LINKER = $(strip $(CC) $(CFLAGS))
+    else
+        override LINKER = $(strip $(CXX) $(CXXFLAGS))
+    endif
+
+    # LDFLAGS
+    override LDFLAGS  := $(strip $(LDFLAGS) $(PKGLDFLAGS))
+    override LIBS      = $(strip $(call mkLibDir, $(LIBRARYPATH)) \
+                                 $(PKGLIBPATH) \
+                                 $(call mkLib, $(LIBRARIES)) \
+                                 $(PKGLIBS))
+
+    $(TARGET):
+		@if [ "$(BINDIR)" != "" ]; then  mkdir -p "$(BINDIR)"; fi
+		$(strip $(LINKER) $(LDFLAGS) $(LDPRELIBS) -o $@ $^ $(LIBS) $(LDPOSTLIBS))
 endif
-
-# LDFLAGS
-override LDFLAGS  := $(strip $(LDFLAGS) $(PKGLDFLAGS))
-override LIBS      = $(strip $(call mkLibDir, $(LIBRARYPATH)) \
-                             $(PKGLIBPATH) \
-                             $(call mkLib, $(LIBRARIES)) \
-                             $(PKGLIBS))
-
-$(TARGET):
-	@if [ "$(BINDIR)" != "" ]; then  mkdir -p "$(BINDIR)"; fi
-	$(strip $(LINKER) $(LDFLAGS) $(LDPRELIBS) -o $@ $^ $(LIBS) $(LDPOSTLIBS))

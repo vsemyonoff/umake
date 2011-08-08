@@ -66,6 +66,8 @@ CXXFLAGS     = $$(CFLAGS)
 #
 # Linker settings
 #
+# Static archive creation flags
+ARFLAGS      = rucs
 # Linker flags
 LDFLAGS      =
 # Libraries search path
