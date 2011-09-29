@@ -49,7 +49,7 @@ override mkLib       = $(strip $(filter -l%, $(1)) $(addprefix -l, $(filter-out 
 override filterLocal = $(shell for i in $(1); do [ ! -L "$$i" ] && echo "$$i"; done)
 
 # Makefile's name and path
-override MAKEFILE = $(shell readlink -f $(firstword $(MAKEFILE_LIST)))
+override MAKEFILE = $(shell test -L $(firstword $(MAKEFILE_LIST)) && readlink $(firstword $(MAKEFILE_LIST)) || echo $(firstword $(MAKEFILE_LIST)))
 # Umake modules folder
 override MODULESDIR = $(call trailSlash, $(dir $(MAKEFILE)).umake)
 
