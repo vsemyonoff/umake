@@ -58,7 +58,7 @@ CPPINCPATH   = include
 # Compilers settings
 #
 # C compiler flags
-CFLAGS       = -ggdb -pipe -pedantic -Wall
+CFLAGS       = -g -ggdb3 -pipe -pedantic -Wall -Werror -O0
 # C++ compiler flags
 CXXFLAGS     = $$(CFLAGS)
 
