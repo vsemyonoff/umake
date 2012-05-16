@@ -24,10 +24,10 @@
 
 # Projects rule (skip actions for symlinked projects)
 $(CONFIGSLIST:%.prj=%): %: %.prj
-	@cd $(dir $(shell test -L $< && readlink $< || echo $<)) && \
+	@cd $(dir $(call readLink, $<)) && \
 		$(MAKE) \
-			$(shell [ ! -z "$(call filterLocal, $<)" ] && echo $(ACTIONS)) \
-				CONFIGFILE=$(notdir $(shell test -L $< && readlink $< || echo $<))
+			$(shell [ -n "$(call filterLocal, $<)" ] && echo $(ACTIONS)) \
+				CONFIGFILE=$(notdir $(call readLink, $<))
 
 # Actions rule (skip symlinked projects)
 $(ACTIONS): $(patsubst %.prj, %, $(call filterLocal, $(patsubst %, %.prj, $(PROJECTS))))

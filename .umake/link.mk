@@ -36,11 +36,11 @@ else
     endif
 
     # LDFLAGS
-    override LDFLAGS  := $(strip $(LDFLAGS) $(PKGLDFLAGS))
-    override LIBS      = $(strip $(call mkLibDir, $(LIBRARYPATH)) \
-                                 $(PKGLIBPATH) \
-                                 $(call mkLib, $(LIBRARIES)) \
-                                 $(PKGLIBS))
+    override LDFLAGS  := $(strip $(PKGLDFLAGS) $(LDFLAGS))
+    override LIBS      = $(strip $(PKGLIBPATH) \
+                                 $(call mkLibDir, $(LIBRARYPATH)) \
+                                 $(PKGLIBS) \
+                                 $(call mkLib, $(LIBRARIES)))
 
     $(TARGET):
 		@if [ "$(BINDIR)" != "" ]; then  mkdir -p "$(BINDIR)"; fi

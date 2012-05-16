@@ -47,11 +47,13 @@ override mkLibDir    = $(strip $(filter -L%, $(1)) $(addprefix -L, $(filter-out 
 override mkLib       = $(strip $(filter -l%, $(1)) $(addprefix -l, $(filter-out -l%, $(1))))
 # Filter symlinked files function
 override filterLocal = $(shell for i in $(1); do [ ! -L "$$i" ] && echo "$$i"; done)
+# Resolve symlink
+override readLink    = $(shell test -L $(1) && readlink $(1) || echo $(1))
 
 # Makefile's name and path
-override MAKEFILE = $(shell test -L $(firstword $(MAKEFILE_LIST)) && readlink $(firstword $(MAKEFILE_LIST)) || echo $(firstword $(MAKEFILE_LIST)))
+override MAKEFILE    = $(call readLink, $(firstword $(MAKEFILE_LIST)))
 # Umake modules folder
-override MODULESDIR = $(call trailSlash, $(dir $(MAKEFILE)).umake)
+override MODULESDIR  = $(call trailSlash, $(dir $(MAKEFILE)).umake)
 
 ifeq ($(CONFIGFILE), $(EMPTY))
 
