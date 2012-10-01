@@ -78,26 +78,22 @@ Exec action support arguments for target execution:
 
 This will run selected or all targets with arguments arg1 arg2.
 
-Symlinked targets usually used as a dependency for other targets, so
-they are skipped while actions processing:
+Symlinked targets usually used as a dependency for other targets:
 
     project/
         library.prj
             tests/
                 test1.prj
                 test2.prj
-                library.prj (symlink to ../library.prj)
+                library.prj -> ../library.prj
                 depends.prg (test1 test2: library)
-
-When 'make clean' called in 'project/tests', cleanup will be performed on
-'test1', 'test2' and NOT on 'library'.
 
 Handlers description:
 Umake support automatic filetype detection by file extension. Each supported
-filetype processed via own handler. Currently cupported: C, CPP, H, HPP, c++,
-c, cc, cp, cpp, cxx, h, hh, hp, hpp, hxx, tcc. If you are using custom name
-(for example cXX for c++ sources), then go to '.umake/handlers' folder and
-add symlink to corresponding handler or create own:
+filetype processed via own handler. Currently cupported: c++, c, cc, cp, cpp,
+cxx, h, hh, hp, hpp, hxx, tcc. If you are using custom name (for example
+cXX for c++ sources), then go to '.umake/handlers' folder and add symlink to
+corresponding handler or create own:
 
     cd .umake/handlers && ln -sf cpp.mk cXX.mk
 
@@ -151,7 +147,7 @@ NOTE: absolute file names are not allowed for SRCDIRLIST, SRCLIST, BINDIR
 and TARGET variabled. Use symlinks or relative path names to add external
 (out of project folder) resources.
 
-Umake will place intermediate files to:
+By default umake will place intermediate files to:
 BUILDROOT/.obj/PROJECT/    - object files
 BUILDROOT/.dep/PROJECT/    - dependency files
 
