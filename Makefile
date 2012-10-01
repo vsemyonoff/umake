@@ -51,9 +51,14 @@ override filterLocal = $(shell for i in $(1); do [ ! -L "$$i" ] && echo "$$i"; d
 override readLink    = $(shell test -L $(1) && readlink $(1) || echo $(1))
 
 # Makefile's name and path
-override MAKEFILE    = $(call readLink, $(firstword $(MAKEFILE_LIST)))
+ifeq ($(MAKEFILE), $(EMPTY))
+    MAKEFILE         = $(PWD)/$(call readLink, $(firstword $(MAKEFILE_LIST)))
+endif
+
 # Umake modules folder
-override MODULESDIR  = $(call trailSlash, $(dir $(MAKEFILE)).umake)
+ifeq ($(MODULESDIR), $(EMPTY))
+    MODULESDIR       = $(call trailSlash, $(dir $(MAKEFILE)).umake)
+endif
 
 ifeq ($(CONFIGFILE), $(EMPTY))
 
