@@ -22,13 +22,12 @@
 
 .PHONY: $(PROJECTS) $(ACTIONS)
 
-# Projects rule (skip actions for symlinked projects)
+# Projects rule
 $(CONFIGSLIST:%.prj=%): %: %.prj
 	@cd $(dir $(call readLink, $<)) && \
-		$(MAKE) \
-			$(shell [ -n "$(call filterLocal, $<)" ] && echo $(ACTIONS)) \
-				CONFIGFILE=$(notdir $(call readLink, $<))
+		$(MAKE) $(ACTIONS) \
+			CONFIGFILE=$(notdir $(shell test -L $< || echo $<))
 
-# Actions rule (skip symlinked projects)
-$(ACTIONS): $(patsubst %.prj, %, $(call filterLocal, $(patsubst %, %.prj, $(PROJECTS))))
+# Actions rule
+$(ACTIONS): $(PROJECTS)
 	@echo "Reached target: $@"

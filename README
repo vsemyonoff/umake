@@ -14,29 +14,18 @@ Makefile was tested with:
  - bash (4.2.006)
  - coreutils (8.10)
  - pkg-config (0.25)
- - Linux (2.6.37.3)
-
-There was not used any version specific features, so I think it will
-work with older or newer versions of these software.
 
 
 Installation
 ------------
 
-Just copy Makefile and '.umake' folder to project's toplevel folder.
-To use Makefile in project subfolders - just create symlink on it.
+Copy Makefile and '.umake' folder to project's toplevel folder.
+To use Makefile in subprojects - create symlink on it.
 
-    peoject/
-        include/
-        src/
-        .umake/
+    MainProject/
         Makefile
-        tests/
-            include/
-            src/
-            test1.prj
-            test2.prj
-            Makefile (symlink to ../Makefile)
+        SubProject/
+            Makefile -> ../Makefile
 
 Umake will resolve symlink and find path to modules folder.
 
@@ -52,29 +41,29 @@ action  - operation on target
 handler - include file, that handle some filetype (cpp.mk -> *.cpp)
 
 Main syntax:
-    make config1.prj [ config2.prj ...]
+    make target1.prj [ target2.prj ...]
         create config files
 
     make [target1 ...] action1 [ action2 ...]
         do actions on selected or on all existing targets
         except external (symlinked)
 
-    make [target1 ...]
+    make [target1 ...]|[all]
         build selected or all existing targets
 
 Usage description:
-First time 'make' will generate target config. Edit config variables
-and type 'make' again to start building target. One config - one target.
+First rum will generate default target config. Edit variables and run
+'make' again to build new target. One config - one target.
 To add target named 'new' to current project type:
 
     make new.prj
 
-By default all targets from current folder will be processed. You can build
+If no target specified then all project targets will be built. You can build
 targets selectively:
 
     make target1 target3
 
-You can declare targets dependency in 'depends.prg' file in makefile format:
+Targets dependencies can be declared in 'depends.prg' file in makefile format:
     dep_project1 [dep_project2 ...]: main_project
 
 Supported actions:

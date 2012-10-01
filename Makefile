@@ -62,7 +62,7 @@ ifeq ($(CONFIGFILE), $(EMPTY))
 # PART #1: search for configuration files & run submake
 #
     # Extend MAKE variable with proper makefile name
-    override MAKE += --makefile $(MAKEFILE) --no-print-directory
+    override MAKE += --makefile $(MAKEFILE)
 
     # Project templates list to be created
     override TPLSLIST = $(EMPTY)
