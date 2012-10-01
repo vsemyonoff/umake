@@ -24,9 +24,9 @@
 
 # Projects rule
 $(CONFIGSLIST:%.prj=%): %: %.prj
-	@cd $(dir $(call readLink, $<)) && $(MAKE) \
-		$(shell test -L $< && echo $(patsubst %.prj, %, $(notdir $<))) \
-			&& $(ACTIONS) CONFIGFILE=$(shell test -L $< || echo $(notdir $<))
+	@cd $(dir $(call readLink, $<)) && $(MAKE) $(ACTIONS) \
+		$(shell test -L $< && echo $(patsubst %.prj, %, $(notdir $(call readLink, $<)))) \
+			CONFIGFILE=$(shell test -L $< || echo $(notdir $<))
 
 # Actions rule
 $(ACTIONS): $(PROJECTS)

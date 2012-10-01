@@ -69,7 +69,7 @@ CXXFLAGS     = $$(CFLAGS)
 # Static archive creation flags
 ARFLAGS      = rucs
 # Linker flags
-LDFLAGS      =
+LDFLAGS      = $$(shell [ `uname -s` == "Darwin" ] && echo "-Wl,-w")
 # Libraries search path
 LIBRARYPATH  =
 # Required libraries list
