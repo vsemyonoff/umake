@@ -27,37 +27,37 @@
 all :
 
 # Empty string constant
-override EMPTY =
+override EMPTY        =
 # Default command interpreter
-override SHELL = bash
+override SHELL        = bash
 
 # Slash functions
-override trailSlash  = $(strip $(filter %/, $(1)) $(addsuffix /, $(filter-out %/, $(1))))
-override rmSlash     = $(strip $(patsubst ./%, %, $(1)))
+override trailSlash   = $(strip $(filter %/, $(1)) $(addsuffix /, $(filter-out %/, $(1))))
+override rmSlash      = $(strip $(patsubst ./%, %, $(1)))
 # Source file name -> intermediate file name conversion functions
-override src2dep     = $(addprefix $(DEPDIR), $(addsuffix .d, $(1)))
-override src2obj     = $(addprefix $(OBJDIR), $(addsuffix .o, $(1)))
+override src2dep      = $(addprefix $(DEPDIR), $(addsuffix .d, $(1)))
+override src2obj      = $(addprefix $(OBJDIR), $(addsuffix .o, $(1)))
 # Intermediate file name -> source file name conversion functions
-override dep2src     = $(strip $(patsubst $(DEPDIR)%.d, %, $(1)))
-override obj2src     = $(strip $(patsubst $(OBJDIR)%.o, %, $(1)))
+override dep2src      = $(strip $(patsubst $(DEPDIR)%.d, %, $(1)))
+override obj2src      = $(strip $(patsubst $(OBJDIR)%.o, %, $(1)))
 # Preprocessor and linker arguments functions
-override mkMacro     = $(strip $(filter -D%, $(1)) $(addprefix -D, $(filter-out -D%, $(1))))
-override mkIncDir    = $(strip $(filter -I%, $(1)) $(addprefix -I, $(filter-out -I%, $(1))))
-override mkLibDir    = $(strip $(filter -L%, $(1)) $(addprefix -L, $(filter-out -L%, $(1))))
-override mkLib       = $(strip $(filter -l%, $(1)) $(addprefix -l, $(filter-out -l%, $(1))))
+override mkMacro      = $(strip $(filter -D%, $(1)) $(addprefix -D, $(filter-out -D%, $(1))))
+override mkIncDir     = $(strip $(filter -I%, $(1)) $(addprefix -I, $(filter-out -I%, $(1))))
+override mkLibDir     = $(strip $(filter -L%, $(1)) $(addprefix -L, $(filter-out -L%, $(1))))
+override mkLib        = $(strip $(filter -l%, $(1)) $(addprefix -l, $(filter-out -l%, $(1))))
 # Filter symlinked files function
-override filterLocal = $(shell for i in $(1); do [ ! -L "$$i" ] && echo "$$i"; done)
+override filterLocal  = $(shell for i in $(1); do [ ! -L "$$i" ] && echo "$$i"; done)
 # Resolve symlink
-override readLink    = $(shell test -L $(1) && readlink $(1) || echo $(1))
+override readLink     = $(shell test -L $(1) && readlink $(1) || echo $(1))
 
 # Makefile's name and path
 ifeq ($(MAKEFILE), $(EMPTY))
-    MAKEFILE         = $(PWD)/$(call readLink, $(firstword $(MAKEFILE_LIST)))
+    export MAKEFILE   = $(PWD)/$(call readLink, $(firstword $(MAKEFILE_LIST)))
 endif
 
 # Umake modules folder
 ifeq ($(MODULESDIR), $(EMPTY))
-    MODULESDIR       = $(call trailSlash, $(dir $(MAKEFILE)).umake)
+    export MODULESDIR = $(call trailSlash, $(dir $(MAKEFILE)).umake)
 endif
 
 ifeq ($(CONFIGFILE), $(EMPTY))
@@ -67,7 +67,7 @@ ifeq ($(CONFIGFILE), $(EMPTY))
 # PART #1: search for configuration files & run submake
 #
     # Extend MAKE variable with proper makefile name
-    override MAKE += --makefile $(MAKEFILE)
+    MAKEFLAGS += --makefile $(MAKEFILE) --no-print-directory
 
     # Project templates list to be created
     override TPLSLIST = $(EMPTY)

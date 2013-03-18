@@ -26,7 +26,7 @@ distclean: clean
 	_cleandir() { \
 		if [ -d "$$1" ]; then \
 			if [ "`find "$$1" -type f`" ==  "" ]; then \
-				$(RM) -rv "$$1"; \
+				$(RM) -rv "$${1%/}"; \
 				PARENT=`dirname "$$1"`; \
 				if [ ! "$$PARENT" == "." ] || [ ! "$$PARENT" == "/" ]; then \
 					_cleandir "$$PARENT"; \

@@ -45,8 +45,8 @@ ifeq ($(filter clean distclean, $(MAKECMDGOALS)), $(EMPTY))
     # Dependency rule
     $(CDEPENDS): %:
 		@echo "Updating dependency file: $(call dep2src, $@) -> $@"; \
-		 mkdir -p $(dir $@); \
-		 echo $(patsubst %:, \
+		mkdir -p $(dir $@); \
+		echo $(patsubst %:, \
 			$(call src2obj, $(call dep2src, $@)) $@: $(CONFIGFILE), \
 				$(shell $(CC) -MM $(C_PPFLAGS) $(call dep2src, $@))) > $@
 
