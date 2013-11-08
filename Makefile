@@ -52,7 +52,7 @@ override readLink     = $(shell test -L $(1) && readlink $(1) || echo $(1))
 
 # Makefile's name and path
 ifeq ($(MAKEFILE), $(EMPTY))
-    export MAKEFILE   = $(PWD)/$(call readLink, $(firstword $(MAKEFILE_LIST)))
+    export MAKEFILE   = $(call readLink, $(firstword $(MAKEFILE_LIST)))
 endif
 
 # Umake modules folder
