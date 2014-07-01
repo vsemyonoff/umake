@@ -27,7 +27,7 @@ override EXECARGS = $(filter-out exec tags clean distclean, $(MAKECMDGOALS))
 exec: $(TARGET)
 	@exec $(TERMINAL) $(SHELL) -c \
 		"LD_LIBRARY_PATH='$(LIBRARYPATH)' $(TARGET) $(EXECARGS); \
-			echo -e '\nPress any key to close the window' && read"
+			echo -e '\nPress any key to continue...' && read"
 
 # Arguments handling empty rule
 .PHONY: $(EXECARGS)

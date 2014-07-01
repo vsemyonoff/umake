@@ -39,8 +39,8 @@ TARGET       = $$(PROJECT)
 #
 # Terminal settings
 #
-TERMNAME     = urxvtc
-TERMOPTIONS  = -e
+TERMNAME     = #urxvtc
+TERMOPTIONS  = #-e
 
 #########################################################################
 #
