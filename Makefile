@@ -3,7 +3,7 @@
 #
 # MakeIt - GNU Make based automation build system
 #
-# Copyright © 2009 Vladyslav Semyonov [vsemyonoff on gmail dot com]
+# Copyright © 2009 Vladyslav Semyonov [vsemyonoff at gmail dot com]
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 
 .SUFFIXES:
 
-# Defalut phony target allow to add user defined targets in config file
+# Default phony target allow to add user defined targets in config file
 .PHONY: all
 all :
 
@@ -102,7 +102,7 @@ else
 #
 # PART #2: process configuration files managed by PART #1
 #
-    # Inlcude configuration file
+    # Include configuration file
     sinclude $(CONFIGFILE)
 
     # Project's short name
@@ -136,7 +136,7 @@ else
     # Do not check packages while cleaning folders or creating project template
     ifeq ($(filter clean distclean, $(MAKECMDGOALS)), $(EMPTY))
         ifneq ($(strip $(REQUIREPKGS)), $(EMPTY))
-            # Inlude linker rules
+            # Include linker rules
             include $(MODULESDIR)pkgconfig.mk
         endif
     endif
